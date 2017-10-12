@@ -1,12 +1,12 @@
 -- ==========================================
 
--- LUNAR HAVEN GAME LIBRARY
+	-- LUNAR HAVEN GAME LIBRARY
 
--- This library is essentially a repository 
--- of functions for interacting with the
--- game (and game worlds') state and tapping
--- into its core functions, such as
--- placing and destorying blocks, etc.
+	-- This library is essentially a repository 
+	-- of functions for interacting with the
+	-- game (and game worlds') state and tapping
+	-- into its core functions, such as
+	-- placing and destorying blocks, etc.
 
 -- ==========================================
 
@@ -18,9 +18,8 @@ lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
 
 function lib.newChunk()
 	local chunk = {}
-	chunk.entities = {} -- all "living" entities; moving, etherial buggers such as players and pets.
-	chunk.objects = {} -- all non-tile objects; blocks with extra functionality at the cost of increased lag.
 	chunk.layers = {} -- tile layers
+	--table.insert(chunk.layers[1].objects,{x=34,y=34,draw = function(self,x,y) love.graphics.rectangle("fill",x,y,tileW,tileH); print(x,y) end}) -- test entity
 	return chunk
 end
 
@@ -42,17 +41,17 @@ function lib.placeBlock(world,block,x,y)
 	if not chunk.layers[i] then
 		chunk.layers[i] = {}
 	end
-	if not chunk.layers[i][x] then
-		chunk.layers[i][x] = {}
+	if not chunk.layers[i][x%chunkW] then
+		chunk.layers[i][x%chunkW] = {}
 	end
 
 	-- minimal rerendering
 	if block then
-		chunk.layers[i][x][y] = block
+		chunk.layers[i][x%chunkW][y%chunkW] = block
 		lib.drawBlock(block,x%chunkW*tileW,y%chunkH*tileH,chunk) -- broken atm. find out why.
 		chunk.rendered = false
 	else
-		chunk.layers[i][x][y] = nil
+		chunk.layers[i][x%chunkW][y%chunkW] = nil
 		lib.drawBlock(nil,x%chunkW*tileW,y%chunkH*tileH,chunk)
 		chunk.rendered = false
 	end
@@ -99,7 +98,7 @@ end
 
 function lib.renderChunk(chunk)
 	for i,v in ipairs(chunk.layers) do
-		if v.canv then v.canv:clear(0,0,0,0) end
+		if v.canv then v.canv:clear(0,0,0,0) else v.canv = love.graphics.newCanvas(chunkW*tileW,chunkH*tileH) end
 		for y = 0,chunkH do
 			for x = 0,chunkW do
 				if v[x] and v[x][y] then

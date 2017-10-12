@@ -31,6 +31,14 @@
 		return v>=0 and v or nil
 	end
 
+	function isWithin(a,b,c)
+		return a>=b and a<=c
+	end
+
+	function isWithin2D(aa,ab,ba,bb,ca,cb)
+		return isWithin(aa,ba,ca) and isWithin(ab,bb,cb)
+	end
+
 	function math.setSign(v,s)
 		if v~=0 then
 			return s==-1 and -math.abs(v) or math.abs(v)
