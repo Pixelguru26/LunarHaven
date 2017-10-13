@@ -3,7 +3,7 @@ game = require("libs/game")
 require("libs/util")
 
 blocks = {}
-world = {entLayers = {}}
+world = {entLayers = {},layerCount = 1}
 
 function state.load()
 	blocks.default = {
@@ -22,9 +22,25 @@ function state.load()
 		end
 	end
 	state.viewPort = Rec(0,0,love.graphics.getWidth(),love.graphics.getHeight())
+
+	local ent = {
+		x = 10,
+		y = 10,
+		layer = 2,
+		draw = function(self,x,y)
+			--print("I'M ALIIIIIIVE!!")
+			love.graphics.setColor(255,255,255,255)
+			love.graphics.rectangle("fill",x,y,tileW,tileH)
+		end,
+		update = function(self,dt)
+			self.x=self.x + dt
+		end
+	}
+	game.insertEntity(world,ent)
 end
 
 function state.update(dt)
+
 	if love.keyboard.isDown("left") then
 		state.viewPort.x = state.viewPort.x - dt*300
 	end
@@ -36,6 +52,14 @@ function state.update(dt)
 	end
 	if love.keyboard.isDown("down") then
 		state.viewPort.y = state.viewPort.y + dt*300
+	end
+
+	for layer = 0,#world.entLayers do
+		for i,v in ipairs(world.entLayers[layer]) do
+			if v.update then
+				v:update(dt)
+			end
+		end
 	end
 end
 
@@ -52,25 +76,31 @@ end
 
 function state.renderWorld(viewRect,world)
 	local chunkW,chunkH,tileW,tileH = chunkW,chunkH,tileW,tileH -- optimizing via localization
-	for y = 0,viewRect.w/chunkW/tileW+2 do
-		for x = 0,viewRect.h/chunkH/tileH+2 do
-			if world[x+math.floor(viewRect.x/chunkW/tileW)] and world[x+math.floor(viewRect.x/chunkW/tileW)][y+math.floor(viewRect.y/chunkH/tileH)] then
-				local chunk = world[x+math.floor(viewRect.x/chunkW/tileW)][y+math.floor(viewRect.y/chunkH/tileH)]
-				love.graphics.reset() -- graphics reset, because we never know what's coming.
-				if not chunk.rendered then -- make sure chunks at least get initialized. Slow, but not unmanageable, and automatically takes care of weird errorchunks. Also allows nearly instant chunk rerendering.
-					game.renderChunk(chunk)
-					love.graphics.reset() -- not 100% sure about game.renderchunk yet tbh.
-				end
-				-- precalculate chunk rendering positions for later use
-				local crx = x*chunkW*tileW-viewRect.x%(chunkW*tileW)
-				local cry = y*chunkH*tileH-viewRect.y%(chunkH*tileH)
+	local crx,cx,cry,cy,chunk
+	for i = 0,world.layerCount do
+		-- render chunks & blocks
+		for y = 0,viewRect.w/chunkW/tileW+2 do
+			for x = 0,viewRect.h/chunkH/tileH+2 do
+				crx = x*chunkW*tileW-viewRect.x%(chunkW*tileW)
+				cx = x+math.floor(viewRect.x/chunkW/tileW)
+				cry = y*chunkH*tileH-viewRect.y%(chunkH*tileH)
+				cy = y+math.floor(viewRect.y/chunkH/tileH)
 
-				local lCount = math.max(chunk and #chunk.layers or 0,#world.entLayers)
-				for i=0,lCount do -- render chunk blocks
+				chunk = world[cx] and world[cx][cy] or nil
+
+				love.graphics.reset() -- graphics reset, because we never know what's coming.
+
+				if chunk then
+					if not chunk.rendered then -- make sure chunks at least get initialized. Slow, but not unmanageable, and automatically takes care of weird errorchunks. Also allows nearly instant chunk rerendering.
+						game.renderChunk(chunk)
+						love.graphics.reset() -- not 100% sure about game.renderchunk yet tbh.
+					end
+
 					local v = chunk.layers[i]
 					if v and v.canv then
 						love.graphics.draw(v.canv,crx,cry)
 					end
+
 					if v and v.objects then 
 						for i,iv in ipairs(v.objects) do
 							if iv.draw then
@@ -78,25 +108,14 @@ function state.renderWorld(viewRect,world)
 							end
 						end
 					end
-					if world.entLayers[i] then
-						for i,iv in ipairs[world.entLayers[i]] do
-							if isWithin2D(iv.x,iv.y,x*chunkW,y*chunkH,x*chunkW+chunkW,y*chunkH+chunkH) and iv.draw then
-								iv:draw(iv.x-viewRect.x,iv.y-viewRect.y)
-							end
-						end
-					end
 				end
-
-				-- show chunk, just to make sure
-				--love.graphics.setColor(0,255,0,100)
-				--love.graphics.rectangle("line",crx,cry,chunkW*tileW,chunkH*tileH)
-			--else
-			--	-- precalculate chunk rendering positions for later use
-			--	local crx = x*chunkW*tileW-viewRect.x%(chunkW*tileW)
-			--	local cry = y*chunkH*tileH-viewRect.y%(chunkH*tileH)
-			--	-- show chunk
-			--	love.graphics.setColor(255,0,0,100)
-			--	love.graphics.rectangle("line",crx,cry,chunkW*tileW,chunkH*tileH)
+			end
+		end
+		if world.entLayers[i] then
+			for ii,iv in ipairs(world.entLayers[i]) do
+				if iv.draw then
+					iv:draw(iv.x*tileW-viewRect.x,iv.y*tileH-viewRect.y)
+				end
 			end
 		end
 	end
