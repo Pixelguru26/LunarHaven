@@ -58,8 +58,8 @@ lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
 			for i=0,#chunk.layers do
 				chunk.layers[i][x%chunkW][y%chunkW] = nil
 				lib.drawBlock(nil,x%chunkW*tileW,y%chunkH*tileH,chunk)
-				chunk.rendered = false
 			end
+			chunk.rendered = false
 		end
 	end
 
@@ -116,6 +116,30 @@ lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
 		chunk.rendered = true
 	end
 
+	function lib.getChunk(world,x,y,create)
+		if world[x] and world[y] then
+			return world[x][y]
+		elseif create then
+			world[x] = world[x] or {}
+			world[x][y] = newChunk()
+			return world[x][y]
+		else
+			return nil
+		end
+	end
+
+	function lib.getTile(world,x,y)
+		local chunk = lib.getChunk(world,math.floor(x/chunkW),math.floor(y/chunkH))
+		if chunk then
+			for i=0,world.layerCount do
+				if chunk.layers[i] and chunk.layers[i][math.floor(x)%chunkW] then
+					return chunk.layers[i][math.floor(x)%chunkW][math.floor(y)%chunkH]
+				end
+			end
+		end
+		return nil
+	end
+
 -- ========================================== Entities, objects & utils
 
 function lib.placeObject(world,obj,x,y)
@@ -158,6 +182,60 @@ function lib.insertEntity(world,ent)
 	end
 	table.insert(world.entLayers[layer],ent)
 	--table.insert(world.entities,entity)
+end
+
+-- swept collisions (oh lord)
+function lib.sweptCollide(v,iv,dt)
+	-- find distance to collision
+	local xDist = v.vel.x<0 and iv.r-v.bounds.x or iv.x-v.bounds.r
+	local xEDist = v.vel.x<0 and iv.x-v.bounds.r or iv.r-v.bounds.x
+	local yDist = v.vel.y<0 and iv.b-v.bounds.y or iv.y-v.bounds.b
+	local yEDist = v.vel.y<0 and iv.y-v.bounds.b or iv.b-v.bounds.y
+
+	if xDist==0 and v.bounds.b>=iv.y and v.bounds.y<=iv.b then
+		return 0,v.bounds.x<iv.x and Vec(-1,0) or Vec(1,0)
+	end
+	if yDist==0 and v.bounds.r>=iv.x and v.bounds.x<=iv.r then
+		return 0,v.bounds.y<iv.y and Vec(0,-1) or Vec(0,1)
+	end
+
+	-- find time to collision
+	local xEntry = v.vel.x==0 and -math.huge or (xDist / (v.vel.x*dt))
+	local xExit = v.vel.x==0 and math.huge or (xEDist / (v.vel.x*dt))
+	local yEntry = v.vel.y==0 and -math.huge or (yDist / (v.vel.y*dt))
+	local yExit = v.vel.y==0 and math.huge or (yEDist / (v.vel.y*dt))
+
+	local entryTime = math.max(xEntry,yEntry)
+	local exitTime = math.min(xExit,yExit)
+
+	-- debuggin'
+	--if love.keyboard.isDown(" ") then
+	--	print("VEL: ",string.sub(tostring(v.vel.x),1,4),string.sub(tostring(v.vel.y),1,4),string.sub(tostring(dt),1,4))
+	--	print("TME: ",entryTime)
+	--end
+
+	-- check collision for validity
+	if entryTime>exitTime or xEntry>=1 or yEntry>=1 or (xEntry<0 and yEntry<0) then
+		--print(entryTime>exitTime, xEntry>=1, yEntry>=1, (xEntry<0 and yEntry<0))
+		return 1,Vec.zero
+	end
+
+	-- collision normal cases
+	if yEntry>xEntry then
+		-- y axis entry
+		if v.vel.y>=0 then
+			return entryTime,Vec(0,-1)
+		else
+			return entryTime,Vec(0,1)
+		end
+	else
+		-- x axis entry
+		if v.vel.x>0 then
+			return entryTime,Vec(-1,0)
+		else
+			return entryTime,Vec(1,0)
+		end
+	end
 end
 
 -- ==========================================

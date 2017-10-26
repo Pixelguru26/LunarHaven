@@ -4,11 +4,15 @@ require("libs/util")
 
 blocks = {}
 world = {entLayers = {},layerCount = 1}
+world.fizzix = {
+	grav = 1.622,--9.807, -- gravity acceleration; but floaty.
+	drag = 0.01
+}
 
 function state.load()
 	blocks.default = {
 		frames = {
-			tile = love.graphics.newImage("stockData/errorBlock.png")
+			tile = love.graphics.newImage("stockData/defaultBlock.png")
 		},
 		properties = {
 			layer = 1,
@@ -16,48 +20,21 @@ function state.load()
 		}
 	}
 
-	for y = 0,chunkH do
-		for x = 0,chunkW do
+	for y = 20,20 do
+		for x = 0,20 do
 			game.placeBlock(world,blocks.default,x,y)
 		end
 	end
 	state.viewPort = Rec(0,0,love.graphics.getWidth(),love.graphics.getHeight())
 
-	local ent = {
-		x = 10,
-		y = 10,
-		layer = 2,
-		draw = function(self,x,y)
-			--print("I'M ALIIIIIIVE!!")
-			love.graphics.setColor(255,255,255,255)
-			love.graphics.rectangle("fill",x,y,tileW,tileH)
-		end,
-		update = function(self,dt)
-			self.x=self.x + dt
-		end
-	}
-	game.insertEntity(world,ent)
+	game.insertEntity(world,require("stockData/player"))
 end
 
 function state.update(dt)
-
-	if love.keyboard.isDown("left") then
-		state.viewPort.x = state.viewPort.x - dt*300
-	end
-	if love.keyboard.isDown("right") then
-		state.viewPort.x = state.viewPort.x + dt*300
-	end
-	if love.keyboard.isDown("up") then
-		state.viewPort.y = state.viewPort.y - dt*300
-	end
-	if love.keyboard.isDown("down") then
-		state.viewPort.y = state.viewPort.y + dt*300
-	end
-
 	for layer = 0,#world.entLayers do
 		for i,v in ipairs(world.entLayers[layer]) do
 			if v.update then
-				v:update(dt)
+				v:update(dt,world,state)
 			end
 		end
 	end
@@ -65,6 +42,16 @@ end
 
 function state.draw()
 	state.renderWorld(state.viewPort,world)
+end
+
+function state.keypressed(key)
+	for layer = 0,#world.entLayers do
+		for i,v in ipairs(world.entLayers[layer]) do
+			if v.update then
+				v:keypressed(key)
+			end
+		end
+	end
 end
 
 function state.resize(w,h)
@@ -104,7 +91,7 @@ function state.renderWorld(viewRect,world)
 					if v and v.objects then 
 						for i,iv in ipairs(v.objects) do
 							if iv.draw then
-								iv:draw(crx+(iv.x*tileW-x),crx+(iv.x*tileW-x))
+								iv:draw(crx+((iv.bounds.x or iv.x)*tileW-x),cry+((iv.bounds.y or iv.y)*tileW-y))
 							end
 						end
 					end
@@ -114,7 +101,7 @@ function state.renderWorld(viewRect,world)
 		if world.entLayers[i] then
 			for ii,iv in ipairs(world.entLayers[i]) do
 				if iv.draw then
-					iv:draw(iv.x*tileW-viewRect.x,iv.y*tileH-viewRect.y)
+					iv:draw((iv.bounds.x or iv.x)*tileW-viewRect.x,(iv.bounds.y or iv.y)*tileH-viewRect.y)
 				end
 			end
 		end

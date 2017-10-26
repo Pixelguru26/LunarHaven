@@ -137,8 +137,7 @@ end
 	function _VECTOR.__lt(a,b)
 		assert(type(a)=='table',"Attempted less than check of number and vector")
 		assert(type(b)=='table',"Attempted less than check of vector and number")
-		local xl,yl = a.x<b.x,a.y<b.y
-		return xl and yl,xl,yl
+		return a.x+a.y < b.x+b.y
 	end
 	function _VECTOR.__le(a,b)
 		assert(type(a)=='table',"Attempted less than or equal to check of number and vector")
@@ -183,6 +182,26 @@ end
 	_VECTOR.MIN=_VECTOR.min
 	_VECTOR.Min=_VECTOR.min
 
+	function _VECTOR.r(v)
+		return _VECTOR(v.y,v.x)
+	end
+	_VECTOR.rev=_VECTOR.r
+	_VECTOR.reverse=_VECTOR.r
+	_VECTOR.R=_VECTOR.r
+	_VECTOR.Rev=_VECTOR.r
+	_VECTOR.Reverse=_VECTOR.r
+	_VECTOR.REV=_VECTOR.r
+	_VECTOR.REVERSE=_VECTOR.r
+
+	function _VECTOR.abs(v)
+		return _VECTOR(math.abs(v.x),math.abs(v.y))
+	end
+	_VECTOR.Abs=_VECTOR.abs
+	_VECTOR.ABS=_VECTOR.abs
+	_VECTOR.absolute=_VECTOR.abs
+	_VECTOR.Absolute=_VECTOR.abs
+	_VECTOR.ABSOLUTE=_VECTOR.abs
+
 	function _VECTOR.funcs.copy(self,a,b)
 		a=a or 0
 		b=b or 0
@@ -192,6 +211,7 @@ end
 			return _VECTOR(self.x+a,self.y+b)
 		end
 	end
+
 
 function _VECTOR.meta.__call(t,x,y)
 	local v=setmetatable({x,y},_VECTOR)
