@@ -48,7 +48,7 @@
 	end
 
 	function math.Limit(v,n,x)
-		return math.min(x,math.max(v,n))
+		return v < n and n or (v > x and x or v)
 	end
 
 	function math.Lerp(v,a,b)

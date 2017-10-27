@@ -1,28 +1,42 @@
+local lume = require("libs/lume")
+
 local plr = {}
 
 plr.layer = 2
 plr.bounds = Rec(0,0,1,1)
 plr.vel = Vec(0.2,-0.1)
-plr.speed = 5
-plr.jump = 5
 plr.onGround = false
-plr.airDamper = 100
-plr.accel = 100
-plr.fizzix = {
-	fric=3
+plr.stats = {
+	fric = 3, -- generic physics friction
+	clamp = 0.0005, -- minimum velocity
+	stumble = 10, -- friction value for walking
+	accel = 100, -- walking acceleration
+	airDamper = 600, -- scaling down of acceleration while in air
+	jump = 4, -- jumping impulse velocity
+	speed = 8, -- max walking velocity
 }
 
 local preCollide
 
 function plr.update(self,dt,world,state)
-	-- apply controls
+	-- apply controls; messy, but essentially just clamps *walking* acceleration at walking speed limit (self.stats.speed)
 	local walking = false
 	if love.keyboard.isDown("left") then
-		self.vel.x=math.Lerp(dt*self.accel/(self.onGround and 1 or self.airDamper+1),self.vel.x,-self.speed)
+		self.vel.x = self.vel.x - math.Limit(
+			self.stats.accel / (self.onGround and 1 or 1+self.stats.airDamper),
+			0,
+			math.Limit(self.stats.speed-math.abs(self.vel.x),0,self.stats.speed
+		))
+
 		walking = true
 	end
 	if love.keyboard.isDown("right") then
-		self.vel.x=math.Lerp(dt*self.accel/(self.onGround and 1 or self.airDamper+1),self.vel.x,self.speed)
+		self.vel.x = self.vel.x + math.Limit(
+			self.stats.accel / (self.onGround and 1 or 1+self.stats.airDamper),
+			0,
+			math.Limit(self.stats.speed-math.abs(self.vel.x),0,self.stats.speed
+		))
+
 		walking = true
 	end
 
@@ -30,6 +44,9 @@ function plr.update(self,dt,world,state)
 	self.vel.y = self.vel.y + world.fizzix.grav*dt
 	-- apply air resistance
 	self.vel = self.vel / (1+world.fizzix.drag*dt)
+	-- apply clamp; makes some people happy
+	if math.abs(self.vel.x)<self.stats.clamp then self.vel.x = 0 end
+	if math.abs(self.vel.y)<self.stats.clamp then self.vel.y = 0 end
 
 	local surroundings = {} -- broadphase selection
 	local tile
@@ -64,9 +81,14 @@ function plr.update(self,dt,world,state)
 		if soonest[2].y==-1 then self.onGround = true end
 		self.bounds.pos=self.bounds.pos+self.vel*(soonest[1]*dt)
 		self.vel = self.vel * soonest[2].rev.abs
-		if not walking then self.vel = self.vel / (1 + (soonest.iv.properties.fric or 1)*self.fizzix.fric*dt) end
 		self.bounds.pos = self.bounds.pos + self.vel*(dt-(dt*soonest[1]))
-		print(self.vel)
+
+		if not walking then 
+			self.vel = self.vel / (1 + (soonest.iv.properties.fric or 1)*self.stats.fric*dt) -- normal friction
+			if self.onGround then 
+				self.vel.x = self.vel.x / (1+(soonest.iv.properties.fric or 1)*self.stats.stumble*dt) -- stumble friction
+			end
+		end
 	else
 		self.onGround=false
 		self.bounds.pos = self.bounds.pos + self.vel*dt
@@ -80,7 +102,7 @@ end
 
 function plr.keypressed(self,key)
 	if key=="up" and self.onGround then
-		self.vel.y = -self.jump
+		self.vel.y = -self.stats.jump
 		self.onGround = false
 	end
 end

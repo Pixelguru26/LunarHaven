@@ -21,7 +21,7 @@ function state.load()
 	}
 
 	for y = 20,20 do
-		for x = 0,20 do
+		for x = 0,200 do
 			game.placeBlock(world,blocks.default,x,y)
 		end
 	end
