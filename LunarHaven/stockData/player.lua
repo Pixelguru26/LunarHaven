@@ -10,10 +10,10 @@ plr.stats = {
 	fric = 3, -- generic physics friction
 	clamp = 0.0005, -- minimum velocity
 	stumble = 10, -- friction value for walking
-	accel = 100, -- walking acceleration
-	airDamper = 600, -- scaling down of acceleration while in air
+	accel = 50, -- walking acceleration
+	airDamper = 200, -- scaling down of acceleration while in air
 	jump = 4, -- jumping impulse velocity
-	speed = 8, -- max walking velocity
+	speed = 6, -- max walking velocity
 }
 
 local preCollide
@@ -50,13 +50,19 @@ function plr.update(self,dt,world,state)
 
 	local surroundings = {} -- broadphase selection
 	local tile
-	for y = math.floor(self.bounds.y+math.min(0,self.vel.y*dt)),math.ceil(self.bounds.b+math.max(0,self.vel.y*dt)+1) do
-		for x = math.floor(self.bounds.x+math.min(0,self.vel.x*dt)),math.ceil(self.bounds.r+math.max(0,self.vel.x*dt)+1) do
-			tile = game.getTile(world,x,y)
-			--print(math.floor(x+self.bounds.x),math.floor(y+self.bounds.y))
-			if tile and tile.properties.solid then
-				table.insert(surroundings, {Rec(x,y,1,1),tile})
-			end
+	local broadphase = self.bounds:copy(
+		math.min(0,self.vel.x*dt),
+		math.min(0,self.vel.y*dt),
+		math.max(0,self.vel.x*dt)-math.min(0,self.vel.x*dt),
+		math.max(0,self.vel.y*dt)-math.min(0,self.vel.y*dt)
+	)
+	local minTile = Rec(math.floor(broadphase.x),math.floor(broadphase.y),1,1)
+	for space in broadphase:iter(minTile) do
+		tile = game.getTile(world,space.x,space.y)
+		--print(math.floor(x+self.bounds.x),math.floor(y+self.bounds.y))
+		if tile and tile.properties.solid then
+			table.insert(surroundings,{Rec(space.x,space.y,1,1),tile})
+			--table.insert(self.fizzRects, Rec(space.x,space.y,1,1))
 		end
 	end
 

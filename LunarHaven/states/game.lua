@@ -28,6 +28,11 @@ function state.load()
 	state.viewPort = Rec(0,0,love.graphics.getWidth(),love.graphics.getHeight())
 
 	game.insertEntity(world,require("stockData/player"))
+
+	uimgr.hotbar[1]=blocks.default
+	love.mouse.setCursor(love.mouse.newCursor(love.image.newImageData("stockData/cursor.png")))
+
+	state.fizzRects = {}
 end
 
 function state.update(dt)
@@ -47,7 +52,7 @@ end
 function state.keypressed(key)
 	for layer = 0,#world.entLayers do
 		for i,v in ipairs(world.entLayers[layer]) do
-			if v.update then
+			if v.keypressed then
 				v:keypressed(key)
 			end
 		end
@@ -57,6 +62,50 @@ end
 function state.resize(w,h)
 	state.viewPort.w = w
 	state.viewPort.h = h
+end
+
+function state.keyreleased(key)
+	for layer = 0,#world.entLayers do
+		for i,v in ipairs(world.entLayers[layer]) do
+			if v.keyreleased then
+				v:keyreleased(key)
+			end
+		end
+	end
+end
+
+function state.mousemoved(x,y,dx,dy)
+	local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
+	local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
+	for layer = 0,#world.entLayers do
+		for i,v in ipairs(world.entLayers[layer]) do
+			if v.mousemoved then
+				v:mousemoved(x,y,ox,oy,dx,dy,world,state)
+			end
+		end
+	end
+end
+function state.mousepressed(x,y,b)
+	local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
+	local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
+	for layer = 0,#world.entLayers do
+		for i,v in ipairs(world.entLayers[layer]) do
+			if v.mousepressed then
+				v:mousepressed(x,y,ox,oy,b,world,state)
+			end
+		end
+	end
+end
+function state.mousereleased(x,y,b)
+	local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
+	local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
+	for layer = 0,#world.entLayers do
+		for i,v in ipairs(world.entLayers[layer]) do
+			if v.mousereleased then
+				v:mousereleased(x,y,ox,oy,b,world,state)
+			end
+		end
+	end
 end
 
 -- lib stuff?

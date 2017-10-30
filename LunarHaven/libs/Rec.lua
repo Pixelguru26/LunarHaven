@@ -176,6 +176,22 @@ _RECTANGLE.data={}
 		return _RECTANGLE(v.x*val,v.y*val,v.w*val,v.h*val)
 	end
 
+	local function iter(self,other)
+		if other.r<self.r then
+			other.x = other.x + other.w
+		elseif other.b<self.b then
+			other.x = other.x - other.w*math.floor(self.w/other.w)
+			other.y = other.y + other.h
+		else
+			return nil
+		end
+		return other,other
+	end
+	function _RECTANGLE.iter(self,other)
+		other.x = other.x - other.w
+		return iter,self,other
+	end
+
 function _RECTANGLE.__index(t,k,v,...)
 	local args={...}
 	if v then

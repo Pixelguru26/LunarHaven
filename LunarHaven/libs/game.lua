@@ -26,36 +26,48 @@ lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
 	function lib.placeBlock(world,block,x,y)
 		local chunkX = math.floor(x/chunkW)
 		local chunkY = math.floor(y/chunkH)
-		local i = block.layer or 1
-		-- check chunk for validity
-		if not world[chunkX] then
-			world[chunkX] = {}
-		end
-		if not world[chunkX][chunkY] then
-			world[chunkX][chunkY] = lib.newChunk() -- CREATE CHUNK
-		end
-		-- local binding
-		local chunk = world[chunkX][chunkY]
+		if block then
+			local i = (block and block.layer) or 1
+			-- check chunk for validity
+			if not world[chunkX] then
+				world[chunkX] = {}
+			end
+			if not world[chunkX][chunkY] then
+				world[chunkX][chunkY] = lib.newChunk() -- CREATE CHUNK
+			end
+			-- local binding
+			local chunk = world[chunkX][chunkY]
 
-		-- check block for validity and place
-		if not chunk.layers[i] then -- no layerskipping
-			for l = 0,i do
-				if not chunk.layers[l] then
-					chunk.layers[l] = {}
+			-- check block for validity and place
+			if not chunk.layers[i] then -- no layerskipping
+				for l = 0,i do
+					if not chunk.layers[l] then
+						chunk.layers[l] = {}
+					end
 				end
 			end
-		end
-		if not chunk.layers[i][x%chunkW] then
-			chunk.layers[i][x%chunkW] = {}
-		end
+			if not chunk.layers[i][x%chunkW] then
+				chunk.layers[i][x%chunkW] = {}
+			end
 
-		-- minimal rerendering
-		if block then
+			-- minimal rerendering
 			chunk.layers[i][x%chunkW][y%chunkW] = block
 			lib.drawBlock(block,x%chunkW*tileW,y%chunkH*tileH,chunk) -- broken atm. find out why.
 			chunk.rendered = false
 		else
+			-- check chunk for validity
+			if not world[chunkX] then
+				world[chunkX] = {}
+			end
+			if not world[chunkX][chunkY] then
+				world[chunkX][chunkY] = lib.newChunk() -- CREATE CHUNK
+			end
+			-- local binding
+			local chunk = world[chunkX][chunkY]
+
 			for i=0,#chunk.layers do
+				if not chunk.layers[i] then chunk.layers[i]={} end
+				if not chunk.layers[i][x%chunkW] then chunk.layers[i][x%chunkW] = {} end
 				chunk.layers[i][x%chunkW][y%chunkW] = nil
 				lib.drawBlock(nil,x%chunkW*tileW,y%chunkH*tileH,chunk)
 			end
@@ -181,6 +193,7 @@ function lib.insertEntity(world,ent)
 		end
 	end
 	table.insert(world.entLayers[layer],ent)
+	if ent.load then ent:load(world,state) end
 	--table.insert(world.entities,entity)
 end
 
