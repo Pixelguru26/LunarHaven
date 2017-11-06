@@ -53,7 +53,7 @@ lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
 
 			-- minimal rerendering
 			chunk.layers[i][math.floor(x)%chunkW][math.floor(y)%chunkW] = block
-			lib.drawBlock(block,math.floor(x)%chunkW*tileW,math.floor(y)%chunkH*tileH,chunk) -- broken atm. find out why.
+			--lib.drawBlock(block,math.floor(x)%chunkW*tileW,math.floor(y)%chunkH*tileH,chunk) -- broken atm. find out how to fix.
 			chunk.rendered = false
 		else
 			-- check chunk for validity
@@ -69,7 +69,7 @@ lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
 			for i=0,#chunk.layers do
 				if chunk.layers[i] and chunk.layers[i][math.floor(x)%chunkW] then
 					chunk.layers[i][math.floor(x)%chunkW][math.floor(y)%chunkW] = nil
-					lib.drawBlock(nil,math.floor(x)%chunkW*tileW,math.floor(y)%chunkH*tileH,chunk)
+					--lib.drawBlock(nil,math.floor(x)%chunkW*tileW,math.floor(y)%chunkH*tileH,chunk)
 				end
 			end
 			chunk.rendered = false
@@ -117,7 +117,9 @@ lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
 	end
 
 	function lib.renderChunk(chunk)
-		for i,v in ipairs(chunk.layers) do
+		local v
+		for i=0,#chunk.layers do
+			v=chunk.layers[i]
 			if v.canv then v.canv:clear(0,0,0,0) else v.canv = love.graphics.newCanvas(chunkW*tileW,chunkH*tileH) end
 			for y = 0,chunkH do
 				for x = 0,chunkW do
@@ -144,14 +146,21 @@ lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
 
 	function lib.getTile(world,x,y)
 		local chunk = lib.getChunk(world,math.floor(x/chunkW),math.floor(y/chunkH))
+		local items = {}
 		if chunk then
 			for i=0,world.layerCount do
 				if chunk.layers[i] and chunk.layers[i][math.floor(x)%chunkW] then
-					return chunk.layers[i][math.floor(x)%chunkW][math.floor(y)%chunkH]
+					table.insert(items,chunk.layers[i][math.floor(x)%chunkW][math.floor(y)%chunkH])
 				end
 			end
 		end
-		return nil
+		if #items==1 then
+			return items[1]
+		elseif #items>0 then
+			return items
+		else
+			return nil
+		end
 	end
 
 -- ========================================== Entities, objects & utils
