@@ -180,7 +180,7 @@ _RECTANGLE.data={}
 		if other.r<self.r then
 			other.x = other.x + other.w
 		elseif other.b<self.b then
-			other.x = other.x - other.w*math.floor(self.w/other.w)
+			other.x = other._ITERSTARTX
 			other.y = other.y + other.h
 		else
 			return nil
@@ -188,6 +188,7 @@ _RECTANGLE.data={}
 		return other,other
 	end
 	function _RECTANGLE.iter(self,other)
+		other._ITERSTARTX = other.x
 		other.x = other.x - other.w
 		return iter,self,other
 	end
@@ -223,7 +224,7 @@ function _RECTANGLE.__newindex(t,k,v,...)
 		elseif _RECTANGLE[k] and _RECTANGLE.data[k] then
 			t[_RECTANGLE[k]]=v
 		else
-			return nil
+			rawset(t,k,v)
 		end
 	else
 		if type(_RECTANGLE[k])=='function' and _RECTANGLE.data[k] then
@@ -233,7 +234,7 @@ function _RECTANGLE.__newindex(t,k,v,...)
 		elseif _RECTANGLE[k] then
 			return _RECTANGLE[k]
 		else
-			return nil
+			return rawget(t,k)
 		end
 	end
 end

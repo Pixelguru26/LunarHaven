@@ -202,6 +202,10 @@ end
 	_VECTOR.Absolute=_VECTOR.abs
 	_VECTOR.ABSOLUTE=_VECTOR.abs
 
+	function _VECTOR.funcs.dist(self,other)
+		return (self-other).l
+	end
+
 	function _VECTOR.funcs.copy(self,a,b)
 		a=a or 0
 		b=b or 0

@@ -5,7 +5,8 @@ _CONSTANTS = {
 	chunkH = 32,
 	fizzix = {
 		grav = 1.622,--9.807, -- gravity acceleration; but floaty.
-		drag = 0.01
+		drag = 0.01,
+		clamp = 0.0005
 	},
 	ui = {
 		hotBarWidth = 1/8, -- this*screenwidth

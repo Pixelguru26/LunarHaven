@@ -1,4 +1,4 @@
---require("libs/cupid")
+require("libs/cupid")
 
 -- Libs, etc
 _VECTOR = require("libs/Vec")("Vec","Vector")

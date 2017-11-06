@@ -15,7 +15,31 @@ function UI.load()
 	UI.resize(gw(),gh())
 end
 
+local last = Vec(0,0)
+local placedLast = false
 function UI.update(dt)
+	local ox = math.floor((love.mouse.getX()+state.viewPort.x)/tileW) -- world x
+	local oy = math.floor((love.mouse.getY()+state.viewPort.y)/tileH) -- world y
+
+	if love.mouse.isDown('l') and not Vec(love.mouse.getX(),love.mouse.getY()):isWithinRec(Rec(gw()-ui.hotBarWidth*gw(),gh()*ui.hotBarMargin,UI.hotBarCanv:getWidth(),UI.hotBarCanv:getHeight())) then
+		if last then
+			UI.placeBlock(UI.hotbar.selIndex,ox,oy)
+			local place = last:copy()
+			local pos = Vec(ox,oy)
+			while place:dist(pos)>0 do
+				place.x = (place.x<pos.x and place.x+1) or (place.x>pos.x and place.x-1) or place.x
+				place.y = (place.y<pos.y and place.y+1) or (place.y>pos.y and place.y-1) or place.y
+				UI.placeBlock(UI.hotbar.selIndex,place.x,place.y)
+			end
+			placedLast=true
+		else
+			UI.placeBlock(UI.hotbar.selIndex,ox,oy)
+			placedLast=true
+		end
+	else
+		placedLast = false
+	end
+	last = Vec(ox,oy)
 end
 
 function UI.draw()
@@ -57,31 +81,36 @@ function UI.resize(w,h)
 end
 
 function UI.mousepressed(x,y,b)
-	if b=="wu" or b=="wl" then
-		UI.hotbar.scroll = math.max(UI.hotbar.scroll-0.5,0)
-	elseif b=="wd" or b=="wr" then
-		UI.hotbar.scroll = math.min(UI.hotbar.scroll+0.5,9-(UI.hotBarCanv:getHeight()-UI.hotBarCanv:getWidth()*ui.hotBarTop)/(UI.hotBarCanv:getWidth()/2+UI.hotBarCanv:getWidth()*ui.hotBarGap))
-	end
 	local pos = Vec(x,y)
 	if pos:isWithinRec(Rec(gw()-ui.hotBarWidth*gw(),gh()*ui.hotBarMargin,UI.hotBarCanv:getWidth(),UI.hotBarCanv:getHeight())) then
-		local hw,hh = UI.hotBarCanv:getWidth(),UI.hotBarCanv:getHeight()
-		local xi = gw()-(3/4*ui.hotBarWidth*gw()) -- left
-		local yi = gh()*ui.hotBarMargin+hw*ui.hotBarTop -- top
-		local w = 3/4*hw -- width of the hotbar itself
-		local h = hh-hw*ui.hotBarTop -- height of the item area
-		local di = hw/2 -- unified dimension of item slot
+		if b=="wu" or b=="wl" then
+			UI.hotbar.scroll = math.max(UI.hotbar.scroll-0.5,0)
+		elseif b=="wd" or b=="wr" then
+			UI.hotbar.scroll = math.min(UI.hotbar.scroll+0.5,9-(UI.hotBarCanv:getHeight()-UI.hotBarCanv:getWidth()*ui.hotBarTop)/(UI.hotBarCanv:getWidth()/2+UI.hotBarCanv:getWidth()*ui.hotBarGap))
+		else
+			local hw,hh = UI.hotBarCanv:getWidth(),UI.hotBarCanv:getHeight()
+			local xi = gw()-(3/4*ui.hotBarWidth*gw()) -- left
+			local yi = gh()*ui.hotBarMargin+hw*ui.hotBarTop -- top
+			local w = 3/4*hw -- width of the hotbar itself
+			local h = hh-hw*ui.hotBarTop -- height of the item area
+			local di = hw/2 -- unified dimension of item slot
 
-		if pos:isWithinRec(Rec(xi+(w/2-di/2),yi,di,h)) then
-			if b=='l' then
-				local index = math.floor((y-yi+UI.hotbar.scroll*(di+ui.hotBarGap*hw))/(di+ui.hotBarGap*hw))+1
-				UI.hotbar.selIndex = index
+			if pos:isWithinRec(Rec(xi+(w/2-di/2),yi,di,h)) then
+				if b=='l' then
+					local index = math.floor((y-yi+UI.hotbar.scroll*(di+ui.hotBarGap*hw))/(di+ui.hotBarGap*hw))+1
+					UI.hotbar.selIndex = index
+				end
 			end
 		end
 	else
 		local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
 		local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
 		if b=="l" then
-			game.placeBlock(world,UI.hotbar[UI.hotbar.selIndex],ox,oy)
+			UI.placeBlock(UI.hotbar.selIndex,ox,oy)
+		elseif b=="wu" or b=="wl" then
+			UI.hotbar.selIndex=math.Limit(UI.hotbar.selIndex-1,1,9)
+		elseif b=="wd" or b=="wr" then
+			UI.hotbar.selIndex=math.Limit(UI.hotbar.selIndex+1,1,9)
 		end
 	end
 end
@@ -89,8 +118,11 @@ end
 function UI.mousemoved(x,y,dx,dy)
 	local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
 	local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
-	if love.mouse.isDown("l") then
-	--	game.placeBlock(world,UI.hotbar[UI.hotbar.selIndex],ox,oy)
+end
+
+function UI.keypressed(key)
+	if tonumber(key) and key~='0' then
+		UI.hotbar.selIndex = tonumber(key)
 	end
 end
 
@@ -194,6 +226,16 @@ function UI.lineRect(x,y,w,h,lw)
 	love.graphics.rectangle("fill",x,y+h-lw,w,lw) -- bottom
 	love.graphics.rectangle("fill",x,y,lw,h) -- left
 	love.graphics.rectangle("fill",x+w-lw,y,lw,h) -- right
+end
+
+function UI.placeBlock(i,x,y)
+	if love.keyboard.isDown("lctrl","rctrl") then
+		game.placeBlock(world,nil,x,y)
+	elseif UI.hotbar[i] and not game.getTile(world,x,y) then
+		game.placeBlock(world,UI.hotbar[i],x,y)
+	elseif not UI.hotbar[i] then
+		game.placeBlock(world,nil,x,y)
+	end
 end
 
 --[[-- experimental conduit gen code. It doesn't look good, in case you're wondering.

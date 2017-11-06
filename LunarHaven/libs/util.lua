@@ -55,6 +55,39 @@
 		return a+v*(b-a)
 	end
 
+	function math.maxIndex(...)
+		local l = {...}
+		local mI = 1
+		for i,v in ipairs(l) do
+			mI=v>l[mI] and i or mI
+		end
+		return mI
+	end
+	function math.minIndex(...)
+		local l = {...}
+		local mI = 1
+		for i,v in ipairs(l) do
+			mI=v<l[mI] and i or mI
+		end
+		return mI
+	end
+	function math.absMaxIndex(...)
+		local l = {...}
+		local mI = 1
+		for i,v in ipairs(l) do
+			mI=math.abs(v)>math.abs(l[mI]) and i or mI
+		end
+		return mI
+	end
+	function math.absMinIndex(...)
+		local l = {...}
+		local mI = 1
+		for i,v in ipairs(l) do
+			mI=math.abs(v)<math.abs(l[mI]) and i or mI
+		end
+		return mI
+	end
+
 	function quickRead(iput,indent)
 		indent = indent or ""
 		local result={}

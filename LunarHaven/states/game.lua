@@ -15,7 +15,34 @@ function state.load()
 			tile = love.graphics.newImage("stockData/defaultBlock.png")
 		},
 		properties = {
-			layer = 1,
+			layer = 4,
+			solid = true
+		}
+	}
+	blocks.defaultBG = {
+		frames = {
+			tile = love.graphics.newImage("stockData/defaultBG.png")
+		},
+		properties = {
+			layer = 0,
+			solid = false
+		}
+	}
+	blocks["test Pillar"] = {
+		frames = {
+			tile = love.graphics.newImage("stockData/pillarBlock.png")
+		},
+		properties = {
+			layer = 4,
+			solid = false
+		}
+	}
+	blocks["test Roof"] = {
+		frames = {
+			tile = love.graphics.newImage("stockData/roofBlock.png")
+		},
+		properties = {
+			layer = 4,
 			solid = true
 		}
 	}
@@ -29,7 +56,10 @@ function state.load()
 
 	game.insertEntity(world,require("stockData/player"))
 
-	uimgr.hotbar[1]=blocks.default
+	table.insert(uimgr.hotbar,blocks.default)
+	table.insert(uimgr.hotbar,blocks.defaultBG)
+	table.insert(uimgr.hotbar,blocks["test Pillar"])
+	table.insert(uimgr.hotbar,blocks["test Roof"])
 	love.mouse.setCursor(love.mouse.newCursor(love.image.newImageData("stockData/cursor.png")))
 
 	state.fizzRects = {}
@@ -113,6 +143,7 @@ end
 function state.renderWorld(viewRect,world)
 	local chunkW,chunkH,tileW,tileH = chunkW,chunkH,tileW,tileH -- optimizing via localization
 	local crx,cx,cry,cy,chunk
+	-- Go through every layer. For each chunk in those layers, render. For each entity in that layer, render.
 	for i = 0,world.layerCount do
 		-- render chunks & blocks
 		for y = 0,viewRect.w/chunkW/tileW+2 do
@@ -147,6 +178,7 @@ function state.renderWorld(viewRect,world)
 				end
 			end
 		end
+		-- render entities
 		if world.entLayers[i] then
 			for ii,iv in ipairs(world.entLayers[i]) do
 				if iv.draw then
