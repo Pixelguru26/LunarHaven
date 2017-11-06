@@ -53,8 +53,8 @@ lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
 
 			-- minimal rerendering
 			chunk.layers[i][math.floor(x)%chunkW][math.floor(y)%chunkW] = block
-			--lib.drawBlock(block,math.floor(x)%chunkW*tileW,math.floor(y)%chunkH*tileH,chunk) -- broken atm. find out how to fix.
-			chunk.rendered = false
+			lib.drawBlock(block,math.floor(x)%chunkW*tileW,math.floor(y)%chunkH*tileH,chunk) -- broken atm. find out how to fix.
+			-- chunk.rendered = false
 		else
 			-- check chunk for validity
 			if not world[chunkX] then
@@ -69,10 +69,10 @@ lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
 			for i=0,#chunk.layers do
 				if chunk.layers[i] and chunk.layers[i][math.floor(x)%chunkW] then
 					chunk.layers[i][math.floor(x)%chunkW][math.floor(y)%chunkW] = nil
-					--lib.drawBlock(nil,math.floor(x)%chunkW*tileW,math.floor(y)%chunkH*tileH,chunk)
+					lib.drawBlock(nil,math.floor(x)%chunkW*tileW,math.floor(y)%chunkH*tileH,chunk)
 				end
 			end
-			chunk.rendered = false
+			-- chunk.rendered = false
 		end
 	end
 
@@ -103,7 +103,9 @@ lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
 			local bm = love.graphics.getBlendMode()
 			local r,g,b,a = love.graphics.getColor()
 			love.graphics.setBlendMode("replace")
-			for i,v in ipairs(chunk.layers) do
+			local v
+			for i=0,#chunk.layers do
+				v=chunk.layers[i]
 				if v.canv then
 					love.graphics.setCanvas(v.canv)
 					love.graphics.setColor(0,0,0,0)

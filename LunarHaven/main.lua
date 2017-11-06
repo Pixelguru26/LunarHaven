@@ -74,3 +74,53 @@ function love.textinput( ... )
 	if state["textinput"] then state.textinput(...) end
 	if uimgr["textinput"] then uimgr.textinput(...) end
 end
+
+function love.run()
+	if love.math then
+		love.math.setRandomSeed(os.time())
+		for i=1,3 do love.math.random() end
+	end
+	if love.event then
+		love.event.pump()
+	end
+	if love.load then love.load(arg) end
+	-- We don't want the first frame's dt to include time taken by love.load.
+	if love.timer then love.timer.step() end
+	local dt = 0
+	-- Main loop time.
+	while true do
+		-- Process events.
+		if love.event then
+			love.event.pump()
+			for e,a,b,c,d in love.event.poll() do
+				if e == "quit" then
+					if not love.quit or not love.quit() then
+						if love.audio then
+							love.audio.stop()
+						end
+						return
+					end
+				end
+				love.handlers[e](a,b,c,d)
+			end
+		end
+		-- Update dt, as we'll be passing it to update
+		if love.timer then
+			love.timer.step()
+			dt = love.timer.getDelta()
+		end
+		-- Moved before update to allow between-frame canvas rendering
+		if love.window.isCreated() then
+			love.graphics.clear()
+		end
+		-- Call update and draw
+		if love.update then love.update(dt) end -- will pass 0 if love.timer is disabled
+ 
+		if love.window.isCreated() then
+			love.graphics.origin()
+			if love.draw then love.draw() end
+			love.graphics.present()
+		end
+		if love.timer then love.timer.sleep(0.001) end
+	end
+end
