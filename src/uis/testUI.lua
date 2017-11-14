@@ -89,9 +89,9 @@ end
 function UI.mousepressed(x,y,b)
 	local pos = Vec(x,y)
 	if pos:isWithinRec(Rec(gw()-ui.hotBarWidth*gw(),gh()*ui.hotBarMargin,UI.hotBarCanv:getWidth(),UI.hotBarCanv:getHeight())) then
-		if b=="wu" or b=="wl" then
+		if controls.isIn("scrlUp",b) then
 			UI.hotbar.scroll = math.max(UI.hotbar.scroll-0.5,0)
-		elseif b=="wd" or b=="wr" then
+		elseif controls.isIn("scrlDn",b) then
 			UI.hotbar.scroll = math.min(UI.hotbar.scroll+0.5,9-(UI.hotBarCanv:getHeight()-UI.hotBarCanv:getWidth()*ui.hotBarTop)/(UI.hotBarCanv:getWidth()/2+UI.hotBarCanv:getWidth()*ui.hotBarGap))
 		else
 			local hw,hh = UI.hotBarCanv:getWidth(),UI.hotBarCanv:getHeight()
@@ -102,7 +102,7 @@ function UI.mousepressed(x,y,b)
 			local di = hw/2 -- unified dimension of item slot
 
 			if pos:isWithinRec(Rec(xi+(w/2-di/2),yi,di,h)) then
-				if b=='l' then
+				if controls.isIn("place",b) then
 					local index = math.floor((y-yi+UI.hotbar.scroll*(di+ui.hotBarGap*hw))/(di+ui.hotBarGap*hw))+1
 					UI.hotbar.selIndex = index
 				end
@@ -111,11 +111,11 @@ function UI.mousepressed(x,y,b)
 	else
 		local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
 		local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
-		if controls.isIn(b,"place") then
+		if controls.isIn("place",b) then
 			UI.placeBlock(UI.hotbar.selIndex,ox,oy)
-		elseif controls.isIn(b,"scrlUp") then
+		elseif controls.isIn("scrlUp",b) then
 			UI.hotbar.selIndex=math.wrap(UI.hotbar.selIndex-1,1,10)
-		elseif controls.isIn(b,"scrlDn") then
+		elseif controls.isIn("scrlDn",b) then
 			UI.hotbar.selIndex=math.wrap(UI.hotbar.selIndex+1,1,10)
 		end
 	end
@@ -159,11 +159,11 @@ function UI.reDraw(w,h)
 		love.graphics.rectangle("fill",2/4*hw,0,hw-hw*(13/40),hh)
 
 		-- texturing overlay
-		--for y=hw*ui.hotBarTop,hh,UI.img.conduitsLeft:getHeight() do
-		--	love.graphics.draw(UI.img.conduitsLeft,hw*1/4,y)		end
-		--for y=hw*ui.hotBarTop,hh,UI.img.conduitsRight:getHeight() do
-		--	love.graphics.draw(UI.img.conduitsRight,math.max(hw-UI.img.conduitsRight:getWidth(),hw*1/4),y)
-		--end
+		-- for y=hw*ui.hotBarTop,hh,UI.img.conduitsLeft:getHeight() do
+		-- 	love.graphics.draw(UI.img.conduitsLeft,hw*1/4,y)		end
+		-- for y=hw*ui.hotBarTop,hh,UI.img.conduitsRight:getHeight() do
+		-- 	love.graphics.draw(UI.img.conduitsRight,math.max(hw-UI.img.conduitsRight:getWidth(),hw*1/4),y)
+		-- end
 		love.graphics.setColor(255,255,255,255/4)
 		for x = 1/4*hw,hw,UI.img.noise:getWidth() do 
 			for y=hw*ui.hotBarTop,hh,UI.img.noise:getHeight() do
@@ -179,7 +179,7 @@ function UI.reDraw(w,h)
 		local tabHeight = hh*ui.hotBarTabHeight
 		local tabY = hh/2-tabHeight/2
 
-		love.graphics.setScissor(unpack(tabSpace))
+		love.graphics.setScissor(tabSpace.x,tabSpace.y,tabSpace.w,tabSpace.h)
 		for piece in tabSpace:iter(Rec(0,0,UI.img.metal:getWidth(),UI.img.metal:getHeight())) do
 			love.graphics.draw(UI.img.metal,piece.x,piece.y)
 		end
@@ -217,6 +217,7 @@ function UI.reDraw(w,h)
 		}
 		love.graphics.polygon("fill",unpack(coords1))
 		love.graphics.polygon("fill",unpack(coords2))
+		tabSpace:del()
 	-- ==========================================
 	love.graphics.reset()
 end

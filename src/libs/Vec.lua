@@ -1,4 +1,4 @@
-local _VECTOR={10,10,funcs={},type="vector",_CACHE={}}
+local _VECTOR={0,0,funcs={},type="vector",_CACHE={}}
 local _CACHE = _VECTOR._CACHE
 _VECTOR.x=1
 _VECTOR.X=1

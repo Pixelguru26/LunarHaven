@@ -2,7 +2,7 @@ local lib={name="Rec"}
 local Vec
 Vec=assert(_VECTOR or require("Vec")() or require("lib/Vec")() or require("libs/Vec")(), "Cannot find/use 'Vec.lua', this is a requirement for "..lib.name.." to function!")
 
-local _RECTANGLE={10,10,10,10,type="rectangle",_CACHE={}}
+local _RECTANGLE={0,0,0,0,type="rectangle",_CACHE={}}
 local _CACHE = _RECTANGLE._CACHE
 
 _RECTANGLE.x=1

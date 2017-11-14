@@ -28,7 +28,7 @@ function plr.load(self)
 end
 
 function plr.update(self,dt,world,state)
-	--self.fizzRects = {}
+	-- self.fizzRects = {}
 	-- apply controls; messy, but essentially just clamps *walking* acceleration at walking speed limit (self.stats.speed)
 	local walking = false
 	if controls.isDown("mvLeft") then
