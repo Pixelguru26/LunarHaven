@@ -1,4 +1,7 @@
 local lume = require("libs/lume")
+local game = require("libs/game")
+local fizzix = game.fizzix
+local controls = game.control
 
 local plr = {}
 
@@ -18,13 +21,17 @@ plr.stats = {
 
 plr.fizzRects = {}
 
-local preCollide
+function plr.load(self)
+	controls.new("mvLeft","left","a")
+	controls.new("mvRight","right","d")
+	controls.new("jump","space","up","w")
+end
 
 function plr.update(self,dt,world,state)
-	self.fizzRects = {}
+	--self.fizzRects = {}
 	-- apply controls; messy, but essentially just clamps *walking* acceleration at walking speed limit (self.stats.speed)
 	local walking = false
-	if love.keyboard.isDown("left") then
+	if controls.isDown("mvLeft") then
 		self.vel.x = self.vel.x - math.Limit(
 			self.stats.accel / (self.onGround and 1 or 1+self.stats.airDamper),
 			0,
@@ -32,7 +39,7 @@ function plr.update(self,dt,world,state)
 		))
 		walking = true
 	end
-	if love.keyboard.isDown("right") then
+	if controls.isDown("mvRight") then
 		self.vel.x = self.vel.x + math.Limit(
 			self.stats.accel / (self.onGround and 1 or 1+self.stats.airDamper),
 			0,
@@ -42,9 +49,9 @@ function plr.update(self,dt,world,state)
 		walking = true
 	end
 
-	game.fizzix.gravity(self,world,dt)
-	game.fizzix.air(self,world,dt)
-	game.fizzix.update(self,world,dt)
+	fizzix.gravity(self,world,dt)
+	fizzix.air(self,world,dt)
+	fizzix.update(self,world,dt)
 
 	-- apply viewPort pos
 	state.viewPort.x = math.Lerp(dt*10,state.viewPort.x,(self.bounds.x+self.bounds.w/2)*tileW-love.graphics.getWidth()/2)
@@ -52,7 +59,7 @@ function plr.update(self,dt,world,state)
 end
 
 function plr.keypressed(self,key)
-	if key=="up" and self.onGround then
+	if controls.isIn("jump",key) and self.onGround then
 		self.vel.y = -self.stats.jump
 		self.onGround = false
 	end

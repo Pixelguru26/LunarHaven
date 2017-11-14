@@ -1,4 +1,4 @@
-require("libs/cupid")
+--require("libs/cupid")
 
 -- Libs, etc
 _VECTOR = require("libs/Vec")("Vec","Vector")
@@ -17,62 +17,65 @@ uimgr = UIMngr["gameUI"]
 function love.load( ... )
 	love.graphics.setDefaultFilter("nearest","nearest")
 	require("constants")
-	if state["load"] then state.load(...) end
-	if uimgr["load"] then uimgr.load(...) end
+	if state.load then state.load(...) end
+	if uimgr.load then uimgr.load(...) end
+	--collectgarbage("stop")
+	--collectgarbage("setpause",1)
 end
 
 function love.update( ... )
-	if state["update"] then state.update(...) end
-	if uimgr["update"] then uimgr.update(...) end
+	if state.update then state.update(...) end
+	if uimgr.update then uimgr.update(...) end
+	--print(collectgarbage("count"))
 end
 
 function love.draw( ... )
 	love.graphics.setDefaultFilter("nearest","nearest")
-	if state["draw"] then state.draw(...) end
-	if uimgr["draw"] then uimgr.draw(...) end
+	if state.draw then state.draw(...) end
+	if uimgr.draw then uimgr.draw(...) end
 end
 
 -- Control callbacks
 function love.keypressed( ... )
-	if state["keypressed"] then state.keypressed(...) end
-	if uimgr["keypressed"] then uimgr.keypressed(...) end
+	if state.keypressed then state.keypressed(...) end
+	if uimgr.keypressed then uimgr.keypressed(...) end
 end
 function love.keyreleased( ... )
-	if state["keyreleased"] then state.keyreleased(...) end
-	if uimgr["keyreleased"] then uimgr.keyreleased(...) end
+	if state.keyreleased then state.keyreleased(...) end
+	if uimgr.keyreleased then uimgr.keyreleased(...) end
 end
 
 function love.mousemoved( ... )
-	if state["mousemoved"] then state.mousemoved(...) end
-	if uimgr["mousemoved"] then uimgr.mousemoved(...) end
+	if state.mousemoved then state.mousemoved(...) end
+	if uimgr.mousemoved then uimgr.mousemoved(...) end
 end
 function love.mousepressed( ... )
-	if state["mousepressed"] then state.mousepressed(...) end
-	if uimgr["mousepressed"] then uimgr.mousepressed(...) end
+	if state.mousepressed then state.mousepressed(...) end
+	if uimgr.mousepressed then uimgr.mousepressed(...) end
 end
 function love.mousereleased( ... )
-	if state["mousereleased"] then state.mousereleased(...) end
-	if uimgr["mousereleased"] then uimgr.mousereleased(...) end
+	if state.mousereleased then state.mousereleased(...) end
+	if uimgr.mousereleased then uimgr.mousereleased(...) end
 end
 
 -- Management
 function love.quit( ... )
-	if state["quit"] then state.quit(...) end
-	if uimgr["quit"] then uimgr.quit(...) end
+	if state.quit then state.quit(...) end
+	if uimgr.quit then uimgr.quit(...) end
 end
 function love.visible( ... )
-	if state["visible"] then state.visible(...) end
-	if uimgr["visible"] then uimgr.visible(...) end
+	if state.visible then state.visible(...) end
+	if uimgr.visible then uimgr.visible(...) end
 end
 function love.resize( ... )
-	if state["resize"] then state.resize(...) end
-	if uimgr["resize"] then uimgr.resize(...) end
+	if state.resize then state.resize(...) end
+	if uimgr.resize then uimgr.resize(...) end
 end
 
 -- Misc
 function love.textinput( ... )
-	if state["textinput"] then state.textinput(...) end
-	if uimgr["textinput"] then uimgr.textinput(...) end
+	if state.textinput then state.textinput(...) end
+	if uimgr.textinput then uimgr.textinput(...) end
 end
 
 function love.run()
@@ -121,6 +124,6 @@ function love.run()
 			if love.draw then love.draw() end
 			love.graphics.present()
 		end
-		if love.timer then love.timer.sleep(0.001) end
+		--if love.timer then love.timer.sleep(0.001) end
 	end
 end

@@ -2,7 +2,8 @@ local lib={name="Rec"}
 local Vec
 Vec=assert(_VECTOR or require("Vec")() or require("lib/Vec")() or require("libs/Vec")(), "Cannot find/use 'Vec.lua', this is a requirement for "..lib.name.." to function!")
 
-local _RECTANGLE={10,10,10,10,type="rectangle"}
+local _RECTANGLE={10,10,10,10,type="rectangle",_CACHE={}}
+local _CACHE = _RECTANGLE._CACHE
 
 _RECTANGLE.x=1
 _RECTANGLE.X=1
@@ -162,9 +163,10 @@ _RECTANGLE.data={}
 		end
 	end
 	function _RECTANGLE.copy(v,dx,dy,dw,dh,mod)
-		mod = mod or {}
-		for k,v in pairs(v) do
-			mod[k] = v
+		if mod then
+			for k,v in pairs(v) do
+				mod[k] = v
+			end
 		end
 		dx=dx or 0
 		dy=dy or 0
@@ -248,13 +250,16 @@ function _RECTANGLE.__eq(a,b)
 end
 
 function _RECTANGLE.meta.__call(t,x,y,w,h,v)
-	v = v or {}
-	v[1]=x
-	v[2]=y
-	v[3]=w
-	v[4]=h
-	local ret=setmetatable(v,_RECTANGLE)
-	return ret
+	v = v or table.remove(_CACHE,#_CACHE) or {}
+	v.x = x
+	v.y = y
+	v.w = w
+	v.h = h
+	return setmetatable(v,_RECTANGLE)
+end
+
+function _RECTANGLE.del(v)
+	table.insert(_CACHE,v)
 end
 
 

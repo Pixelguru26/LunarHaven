@@ -1,13 +1,18 @@
 local state = {}
 game = require("libs/game")
+worldLib = game.world
+fizzLib = game.fizzix
+controls = game.control
 require("libs/util")
 
 blocks = {}
 world = {entLayers = {},layerCount = 1}
 world.fizzix = {
 	grav = 1.622,--9.807, -- gravity acceleration; but floaty.
-	drag = 0.01
+	drag = 0.01,
+	clock = 0
 }
+deltas = {c=0,n=0} -- purely for debugging
 
 function state.load()
 	blocks.default = {
@@ -49,27 +54,40 @@ function state.load()
 
 	for y = 20,20 do
 		for x = 0,200 do
-			game.placeBlock(world,blocks.default,x,y)
+			worldLib.placeBlock(world,blocks.default,x,y)
 		end
 	end
 	state.viewPort = Rec(0,0,love.graphics.getWidth(),love.graphics.getHeight())
 
-	game.insertEntity(world,require("stockData/player"))
+	worldLib.insertEntity(world,require("stockData/player"))
 
-	table.insert(uimgr.hotbar,blocks.default)
-	table.insert(uimgr.hotbar,blocks.defaultBG)
-	table.insert(uimgr.hotbar,blocks["test Pillar"])
-	table.insert(uimgr.hotbar,blocks["test Roof"])
+	if uimgr.hotbar then
+		table.insert(uimgr.hotbar,blocks.default)
+		table.insert(uimgr.hotbar,blocks.defaultBG)
+		table.insert(uimgr.hotbar,blocks["test Pillar"])
+		table.insert(uimgr.hotbar,blocks["test Roof"])
+	end
 	love.mouse.setCursor(love.mouse.newCursor(love.image.newImageData("stockData/cursor.png")))
 
 	state.fizzRects = {}
+	world.clock = 0
 end
 
 function state.update(dt)
+	world.clock = world.clock + dt
+	-- debugging an extremely odd lag source
+	-- deltas.c = deltas.c + 1
+	-- deltas.n = deltas.n + dt
+	-- if dt>deltas.n/deltas.c and world.clock>1 then
+	-- 	print(world.clock,deltas.n/deltas.c,dt)
+	-- end
+
 	for layer = 0,#world.entLayers do
-		for i,v in ipairs(world.entLayers[layer]) do
-			if v.update then
-				v:update(dt,world,state)
+		if world.entLayers[layer] then
+			for i,v in ipairs(world.entLayers[layer]) do
+				if v.update then
+					v:update(dt,world,state)
+				end
 			end
 		end
 	end
@@ -108,9 +126,11 @@ function state.mousemoved(x,y,dx,dy)
 	local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
 	local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
 	for layer = 0,#world.entLayers do
-		for i,v in ipairs(world.entLayers[layer]) do
-			if v.mousemoved then
-				v:mousemoved(x,y,ox,oy,dx,dy,world,state)
+		if world.entLayers[layer] then
+			for i,v in ipairs(world.entLayers[layer]) do
+				if v.mousemoved then
+					v:mousemoved(x,y,ox,oy,dx,dy,world,state)
+				end
 			end
 		end
 	end
@@ -119,9 +139,11 @@ function state.mousepressed(x,y,b)
 	local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
 	local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
 	for layer = 0,#world.entLayers do
-		for i,v in ipairs(world.entLayers[layer]) do
-			if v.mousepressed then
-				v:mousepressed(x,y,ox,oy,b,world,state)
+		if world.entLayers[layer] then
+			for i,v in ipairs(world.entLayers[layer]) do
+				if v.mousepressed then
+					v:mousepressed(x,y,ox,oy,b,world,state)
+				end
 			end
 		end
 	end
@@ -130,9 +152,11 @@ function state.mousereleased(x,y,b)
 	local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
 	local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
 	for layer = 0,#world.entLayers do
-		for i,v in ipairs(world.entLayers[layer]) do
-			if v.mousereleased then
-				v:mousereleased(x,y,ox,oy,b,world,state)
+		if world.entLayers[layer] then
+			for i,v in ipairs(world.entLayers[layer]) do
+				if v.mousereleased then
+					v:mousereleased(x,y,ox,oy,b,world,state)
+				end
 			end
 		end
 	end
@@ -155,12 +179,12 @@ function state.renderWorld(viewRect,world)
 
 				chunk = world[cx] and world[cx][cy] or nil
 
-				love.graphics.reset() -- graphics reset, because we never know what's coming.
+				--love.graphics.reset() -- graphics reset, because we never know what's coming.
 
 				if chunk then
 					if not chunk.rendered then -- make sure chunks at least get initialized. Slow, but not unmanageable, and automatically takes care of weird errorchunks. Also allows nearly instant chunk rerendering.
-						game.renderChunk(chunk)
-						love.graphics.reset() -- not 100% sure about game.renderchunk yet tbh.
+						worldLib.renderChunk(chunk)
+						love.graphics.reset() -- not 100% sure about worldLib.renderchunk yet tbh.
 					end
 
 					local v = chunk.layers[i]
@@ -178,7 +202,7 @@ function state.renderWorld(viewRect,world)
 				end
 			end
 		end
-		-- render entities
+		--render entities
 		if world.entLayers[i] then
 			for ii,iv in ipairs(world.entLayers[i]) do
 				if iv.draw then

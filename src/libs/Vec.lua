@@ -1,4 +1,5 @@
-local _VECTOR={10,10,funcs={},type="vector"}
+local _VECTOR={10,10,funcs={},type="vector",_CACHE={}}
+local _CACHE = _VECTOR._CACHE
 _VECTOR.x=1
 _VECTOR.X=1
 _VECTOR.y=2
@@ -218,8 +219,10 @@ end
 
 
 function _VECTOR.meta.__call(t,x,y)
-	local v=setmetatable({x,y},_VECTOR)
-	return v
+	local v = table.remove(_CACHE,#_CACHE) or {}
+	v.x = x
+	v.y = y
+	return setmetatable(v,_VECTOR)
 end
 
 setmetatable(_VECTOR,_VECTOR.meta)
@@ -235,6 +238,10 @@ _VECTOR.ZERO=_VECTOR.zero
 
 function _VECTOR.funcs.isWithinRec(self,rect)
 	return type(rect)=="table" and rect.type=="rectangle" and self >= rect.pos1 and self <= rect.pos4
+end
+
+function _VECTOR.funcs.del(self)
+	table.insert(_VECTOR._CACHE,self)
 end
 
 function dist(x1,y1,x2,y2)

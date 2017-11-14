@@ -1,6 +1,12 @@
 local UI = {hotbar = {scroll=0,selIndex=1}}
+local game = require("libs/game")
+local controls = game.control
 
 function UI.load()
+	controls.new("place",'l')
+	controls.new("destMod",'lctrl','rctrl')
+	controls.new("scrlUp",'wu','wl')
+	controls.new("scrlDn",'wd','wr')
 	UI.gradientShader = love.graphics.newShader("stockData/shaders/gradient.fs")
 	UI.img = {
 		default=love.graphics.newImage("stockData/defaultBlock.png"),
@@ -21,7 +27,7 @@ function UI.update(dt)
 	local ox = math.floor((love.mouse.getX()+state.viewPort.x)/tileW) -- world x
 	local oy = math.floor((love.mouse.getY()+state.viewPort.y)/tileH) -- world y
 
-	if love.mouse.isDown('l') and not Vec(love.mouse.getX(),love.mouse.getY()):isWithinRec(Rec(gw()-ui.hotBarWidth*gw(),gh()*ui.hotBarMargin,UI.hotBarCanv:getWidth(),UI.hotBarCanv:getHeight())) then
+	if controls.isDown('place') and not Vec(love.mouse.getX(),love.mouse.getY()):isWithinRec(Rec(gw()-ui.hotBarWidth*gw(),gh()*ui.hotBarMargin,UI.hotBarCanv:getWidth(),UI.hotBarCanv:getHeight())) then
 		if last then
 			UI.placeBlock(UI.hotbar.selIndex,ox,oy)
 			local place = last:copy()
@@ -105,12 +111,12 @@ function UI.mousepressed(x,y,b)
 	else
 		local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
 		local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
-		if b=="l" then
+		if controls.isIn(b,"place") then
 			UI.placeBlock(UI.hotbar.selIndex,ox,oy)
-		elseif b=="wu" or b=="wl" then
-			UI.hotbar.selIndex=math.Limit(UI.hotbar.selIndex-1,1,9)
-		elseif b=="wd" or b=="wr" then
-			UI.hotbar.selIndex=math.Limit(UI.hotbar.selIndex+1,1,9)
+		elseif controls.isIn(b,"scrlUp") then
+			UI.hotbar.selIndex=math.wrap(UI.hotbar.selIndex-1,1,10)
+		elseif controls.isIn(b,"scrlDn") then
+			UI.hotbar.selIndex=math.wrap(UI.hotbar.selIndex+1,1,10)
 		end
 	end
 end
@@ -229,7 +235,7 @@ function UI.lineRect(x,y,w,h,lw)
 end
 
 function UI.placeBlock(i,x,y)
-	if love.keyboard.isDown("lctrl","rctrl") then
+	if controls.isDown("destMod") then
 		game.placeBlock(world,nil,x,y)
 	elseif UI.hotbar[i] and not game.getTile(world,x,y) then
 		game.placeBlock(world,UI.hotbar[i],x,y)

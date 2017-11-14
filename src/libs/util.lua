@@ -87,6 +87,9 @@
 		end
 		return mI
 	end
+	function math.wrap(v,n,m)
+		return ((v-n)%(m-n))+n
+	end
 
 	function quickRead(iput,indent)
 		indent = indent or ""
