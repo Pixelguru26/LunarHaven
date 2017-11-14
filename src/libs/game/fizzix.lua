@@ -100,7 +100,7 @@ function lib.testCollision(self,potential,rdt)
 		coll.iv = v[2] -- not the most elegant way to store the original tile, but it works.
 		-- collision "sorting"
 		if soonest and soonest[1]<coll[1] then
-			soonest:del()
+			if soonest.del then soonest:del() else print("Woah there! A known bug just happened; mind sending us a screenshot?") end
 			soonest = coll
 		elseif not soonest then
 			soonest = coll
