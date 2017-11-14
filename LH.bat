@@ -1,1 +1,1 @@
-"%~dp0love\love.exe" "%~dp0LunarHaven"
+"%~dp0love\love.exe" "%~dp0src"
