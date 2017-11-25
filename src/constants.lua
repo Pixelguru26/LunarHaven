@@ -16,7 +16,8 @@ _CONSTANTS = {
 		hotBarGutter = 1/8, -- this*hotBarWidth
 		hotBarTabHeight = 1/4, -- this*(screenheight-hotBarMargin*screenheight*2)
 		hotBarPadding = 1/20, -- this*hotBarWidth/2
-	}
+	},
+	modsDir = love.filesystem.getSourceBaseDirectory().."/mods"
 }
 
 setmetatable(_G,{__index = _CONSTANTS})
