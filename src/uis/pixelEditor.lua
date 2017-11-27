@@ -17,7 +17,7 @@ function UI.load()
 
 		brL = love.graphics.newImage("stockData/UI/UI2_tbar1_L.png"),
 		brM = love.graphics.newImage("stockData/UI/UI2_tbar1_M.png"),
-		brt = love.graphics.newImage("stockData/UI/UI2_tbar1_trans.png"),
+		brt = love.graphics.newImage("stockData/UI/UI2_tbar1_Trans.png"),
 		brMR = love.graphics.newImage("stockData/UI/UI2_tbar1_MR.png"),
 		brR = love.graphics.newImage("stockData/UI/UI2_tbar1_R.png"),
 
@@ -34,6 +34,7 @@ function UI.load()
 
 		xbut = love.graphics.newImage("stockData/UI/UI2_buttons_X.png"),
 		etr = love.graphics.newImage("stockData/UI/UI2_buttons_Enter.png"),
+		cbx = love.graphics.newImage("stockData/UI/UI2_colorBox.png"),
 
 		bgCol = love.graphics.newImage("stockData/UI/UI2_backg_color.png"),
 	}
@@ -82,7 +83,14 @@ function UI.draw()
 	love.graphics.draw(UI.img.etr,dims.r,dims.b,0,scale,scale,UI.img.etr:getWidth()-1,UI.img.etr:getHeight()-1) -- enter button
 
 	-- color boxes - KEEP OUT OF RESIZE!
-	
+	local area = Rect(dims.r-scale,dims.y,UI.img.cbx:getWidth()*scale,dims.h)
+	local box = Rect(dims.r-scale,dims.y,UI.img.cbx:getWidth()*scale,UI.img.cbx:getHeight()*scale+scale)
+
+	for _,box in area:iter(box) do
+		love.graphics.rectangle("line",box.x,box.y,box.w,box.h)
+	end
+
+	area:del()
 end
 
 function UI.resize(x,y)

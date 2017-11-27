@@ -28,14 +28,14 @@ function love.load( ... )
 	-- "mods"
 	local i,t
 	local temp = {}
-	if not io.popen then
+	if io.popen then
 		-- HOLY FUCK THIS HACK. I MEAN, THANK GOD FOR IT, BUT HOLY FUCK.
 		i, t, popen = 0, {}, io.popen
 		local pfile
 		if love.system.getOS()=="Windows" then
 			pfile = popen('dir "'..modsDir..'" /b')
 		else
-			local pfile = popen('ls -a "'..modsDir..'"') -- for linux?
+			pfile = popen('ls -a "'..modsDir..'"') -- for linux?
 		end
 		for filename in pfile:lines() do
 			i = i + 1
