@@ -1,60 +1,62 @@
-function framedRect(rect,topLeft,topRight,bottomLeft,bottomRight,top,left,bottom,right,outside,rep)
+local function framedRect(rect,topLeft,topRight,bottomLeft,bottomRight,top,left,bottom,right,outside,rep,sx,sy)
+	sx = sx or 1
+	sy = sy or 1
 	if outside then
 		if rep then
-			for x=rect.x,rect.r-top:getWidth(),top:getWidth() do
-				love.graphics.draw(top,x,rect.y-top:getHeight())
+			for x=rect.x,rect.r-(top:getWidth()*sx),(top:getWidth()*sx) do
+				love.graphics.draw(top,x,rect.y-(top:getHeight()*sy),0,sx,sy)
 			end
-			for x=rect.x,rect.r-bottom:getWidth(),bottom:getWidth() do
-				love.graphics.draw(bottom,x,rect.b)
+			for x=rect.x,rect.r-(bottom:getWidth()*sx),(bottom:getWidth()*sx) do
+				love.graphics.draw(bottom,x,rect.b,0,sx,sy)
 			end
-			for y=rect.y,rect.b-left:getHeight(),left:getHeight() do
-				love.graphics.draw(left,rect.x-left:getWidth(),y)
+			for y=rect.y,rect.b-(left:getHeight()*sy),(left:getHeight()*sy) do
+				love.graphics.draw(left,rect.x-(left:getWidth()*sx),y,0,sx,sy)
 			end
-			for y=rect.y,rect.b-right:getHeight(),right:getHeight() do
-				love.graphics.draw(right,rect.r,y)
+			for y=rect.y,rect.b-(right:getHeight()*sy),(right:getHeight()*sy) do
+				love.graphics.draw(right,rect.r,y,0,sx,sy)
 			end
 		else
-			love.graphics.draw(top,rect.x,rect.y-top:getHeight(),0,rect.w/top:getWidth(),1)
-			love.graphics.draw(bottom,rect.x,rect.b,0,rect.w/bottom:getWidth(),1)
-			love.graphics.draw(left,rect.x-left:getWidth(),rect.y,0,1,rect.h/left:getHeight())
-			love.graphics.draw(right,rect.r,rect.y,0,1,rect.h/right:getHeight())
+			love.graphics.draw(top,rect.x,rect.y-(top:getHeight()*sy),0,rect.w/(top:getWidth()*sx)*sx,sy)
+			love.graphics.draw(bottom,rect.x,rect.b,0,rect.w/(bottom:getWidth()*sx)*sx,sy)
+			love.graphics.draw(left,rect.x-(left:getWidth()*sx),rect.y,0,sx,rect.h/(left:getHeight()*sy)*sy)
+			love.graphics.draw(right,rect.r,rect.y,0,sx,rect.h/(right:getHeight()*sy)*sy)
 		end
-		love.graphics.draw(topLeft,rect.x-topLeft:getWidth(),rect.y-topLeft:getHeight())
-		love.graphics.draw(topRight,rect.r,rect.y-topRight:getHeight())
-		love.graphics.draw(bottomLeft,rect.x-bottomLeft:getWidth(),rect.b)
-		love.graphics.draw(bottomRight,rect.r,rect.b)
+		love.graphics.draw(topLeft,rect.x-(topLeft:getWidth()*sx),rect.y-(topLeft:getHeight()*sy),0,sx,sy)
+		love.graphics.draw(topRight,rect.r,rect.y-(topRight:getHeight()*sy),0,sx,sy)
+		love.graphics.draw(bottomLeft,rect.x-(bottomLeft:getWidth()*sx),rect.b,0,sx,sy)
+		love.graphics.draw(bottomRight,rect.r,rect.b,0,sx,sy)
 	else
 		if rep then
-			local r1 = rect.r-topRight:getWidth()-top:getWidth()
-			local r2 = rect.r-bottomRight:getWidth()-bottom:getWidth()
-			local b1 = rect.b-bottomLeft:getHeight()-left:getHeight()
-			local b2 = rect.b-bottomRight:getHeight()-right:getHeight()
-			for x=rect.x+topLeft:getWidth(),r1,top:getWidth() do
-				love.graphics.draw(top,x,rect.y)
+			local r1 = rect.r-(topRight:getWidth()*sx)-(top:getWidth()*sx)
+			local r2 = rect.r-(bottomRight:getWidth()*sx)-(bottom:getWidth()*sx)
+			local b1 = rect.b-(bottomLeft:getHeight()*sy)-(left:getHeight()*sy)
+			local b2 = rect.b-(bottomRight:getHeight()*sy)-(right:getHeight()*sy)
+			for x=rect.x+(topLeft:getWidth()*sx),r1,(top:getWidth()*sx) do
+				love.graphics.draw(top,x,rect.y,0,sx,sy)
 			end
-			for x=rect.x+bottomLeft:getWidth(),r2,bottom:getWidth() do
-				love.graphics.draw(bottom,x,rect.b-bottom:getHeight())
+			for x=rect.x+(bottomLeft:getWidth()*sx),r2,(bottom:getWidth()*sx) do
+				love.graphics.draw(bottom,x,rect.b-(bottom:getHeight()*sy),0,sx,sy)
 			end
-			for y=rect.y+topLeft:getHeight(),b1,left:getHeight() do
-				love.graphics.draw(left,rect.x,y)
+			for y=rect.y+(topLeft:getHeight()*sy),b1,(left:getHeight()*sy) do
+				love.graphics.draw(left,rect.x,y,0,sx,sy)
 			end
-			for y=rect.y+topLeft:getHeight(),b2,right:getHeight() do
-				love.graphics.draw(right,rect.r-right:getWidth(),y)
+			for y=rect.y+(topLeft:getHeight()*sy),b2,(right:getHeight()*sy) do
+				love.graphics.draw(right,rect.r-(right:getWidth()*sx),y,0,sx,sy)
 			end
 		else
-			local w1 = rect.w-topLeft:getWidth()-topRight:getWidth()
-			local w2 = rect.w-bottomLeft:getWidth()-bottomRight:getWidth()
-			local h1 = rect.h-topLeft:getHeight()-bottomLeft:getHeight()
-			local h2 = rect.h-topRight:getHeight()-bottomRight:getHeight()
-			love.graphics.draw(top,rect.x+topLeft:getWidth(),rect.y,0,w1/top:getWidth(),1)
-			love.graphics.draw(bottom,rect.x+bottomLeft:getWidth(),rect.b-bottom:getHeight(),0,w2/bottom:getWidth(),1)
-			love.graphics.draw(left,rect.x,rect.y+topLeft:getHeight(),0,1,h1/left:getHeight())
-			love.graphics.draw(right,rect.r-right:getWidth(),rect.y+bottomRight:getHeight(),0,1,h2/right:getHeight())
+			local w1 = rect.w-(topLeft:getWidth()*sx)-(topRight:getWidth()*sx)
+			local w2 = rect.w-(bottomLeft:getWidth()*sx)-(bottomRight:getWidth()*sx)
+			local h1 = rect.h-(topLeft:getHeight()*sy)-(bottomLeft:getHeight()*sy)
+			local h2 = rect.h-(topRight:getHeight()*sy)-(bottomRight:getHeight()*sy)
+			love.graphics.draw(top,rect.x+(topLeft:getWidth()*sx),rect.y,0,w1/(top:getWidth()*sx)*sx,sy)
+			love.graphics.draw(bottom,rect.x+(bottomLeft:getWidth()*sx),rect.b-(bottom:getHeight()*sy),0,w2/(bottom:getWidth()*sx)*sx,sy)
+			love.graphics.draw(left,rect.x,rect.y+(topLeft:getHeight()*sy),0,sx,h1/(left:getHeight()*sy)*sy)
+			love.graphics.draw(right,rect.r-(right:getWidth()*sx),rect.y+(bottomRight:getHeight()*sy),0,sx,h2/(right:getHeight()*sy)*sy)
 		end
-		love.graphics.draw(topLeft,rect.x,rect.y)
-		love.graphics.draw(topRight,rect.r-topRight:getWidth(),rect.y)
-		love.graphics.draw(bottomLeft,rect.x,rect.b-bottomLeft:getHeight())
-		love.graphics.draw(bottomRight,rect.r-bottomRight:getWidth(),rect.b-bottomRight:getHeight())
+		love.graphics.draw(topLeft,rect.x,rect.y,0,sx,sy)
+		love.graphics.draw(topRight,rect.r-(topRight:getWidth()*sx),rect.y,0,sx,sy)
+		love.graphics.draw(bottomLeft,rect.x,rect.b-(bottomLeft:getHeight()*sy),0,sx,sy)
+		love.graphics.draw(bottomRight,rect.r-(bottomRight:getWidth()*sx),rect.b-(bottomRight:getHeight()*sy),0,sx,sy)
 	end
 end
 

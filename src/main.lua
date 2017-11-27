@@ -10,42 +10,67 @@ States["game"] = love.filesystem.isFile("states/game.lua") and require("states/g
 state = States["game"]
 -- UIMngr
 UIMngr = {}
-UIMngr["gameUI"] = love.filesystem.isFile("uis/gameUI.lua") and require("uis/gameUI") or require("uis/testUI")
-uimgr = UIMngr["gameUI"]
+enabledUIs = {}
 -- "Mods"
 Mods = {}
 function modErr() print(">> A mod is causing trouble. Here's the lowdown:\n\t"..debug.traceback()) end
 
 -- CORE
 function love.load( ... )
-
 	love.graphics.setDefaultFilter("nearest","nearest")
 	require("constants")
 	if state.load then state.load(...) end
-	if uimgr.load then uimgr.load(...) end
-	-- "mods" -- HOLY FUCK THIS HACK. I MEAN, THANK GOD FOR IT, BUT HOLY FUCK.
-	local i, t, popen = 0, {}, io.popen
-	local pfile
-	if love.system.getOS()=="Windows" then
-		pfile = popen('dir "'..modsDir..'" /b')
-	else
-		local pfile = popen('ls -a "'..modsDir..'"') -- for linux?
-	end
-	for filename in pfile:lines() do
-		i = i + 1
-		t[i] = filename
-	end
-	pfile:close()
-
-	local temp = {}
-	for i,v in ipairs(t) do
-		local status,mod,rank = xpcall(dofile,function() print("mod "..v.." didn't load properly.") end,modsDir..'/'..v)
-		if status and type(mod)=="table" then
-			mod.name = mod.name or v
-			rank = rank or math.huge
-			table.insert(temp,{mod,rank})
+	for i,v in ipairs(enabledUIs) do
+		if v.load then
+			v.load( ... )
 		end
 	end
+	-- "mods"
+	local i,t
+	local temp = {}
+	if not io.popen then
+		-- HOLY FUCK THIS HACK. I MEAN, THANK GOD FOR IT, BUT HOLY FUCK.
+		i, t, popen = 0, {}, io.popen
+		local pfile
+		if love.system.getOS()=="Windows" then
+			pfile = popen('dir "'..modsDir..'" /b')
+		else
+			local pfile = popen('ls -a "'..modsDir..'"') -- for linux?
+		end
+		for filename in pfile:lines() do
+			i = i + 1
+			t[i] = filename
+		end
+		pfile:close()
+
+		for i,v in ipairs(t) do
+			local status,mod,rank = xpcall(dofile,function() print("mod "..v.." didn't load properly.") end,modsDir..'/'..v)
+			if status and type(mod)=="table" then
+				mod.name = mod.name or v
+				rank = rank or math.huge
+				table.insert(temp,{mod,rank})
+			end
+		end
+	else
+		t={}
+		print("Well crap; it appears your Lua version doesn't support 'popen,' and therefore doesn't support normal modding! Tell the devs!\nAlso, move your mods to /src/mods/, as this is more likely to be available on your system.")
+		print("Switching to /src/mods/...")
+		for i,v in ipairs(love.filesystem.getDirectoryItems("mods")) do
+			if love.filesystem.isFile(v) then
+				table.insert(t,v)
+			end
+		end
+
+		for i,v in ipairs(t) do
+			local status,mod,rank = xpcall(dofile,function() print("mod \""..v.."\" didn't load properly.") end,getSourceDirectory()..'/mods/'..v)
+			if status and type(mod)=="table" then
+				mod.name = mod.name or v
+				rank = rank or math.huge
+				table.insert(temp,{mod,rank})
+			end
+		end
+	end
+
 	-- simple swapsort thing
 	local sorted
 	repeat
@@ -72,7 +97,11 @@ end
 
 function love.update( ... )
 	if state.update then state.update(...) end
-	if uimgr.update then uimgr.update(...) end
+	for i,v in ipairs(enabledUIs) do
+		if v.update then
+			v.update( ... )
+		end
+	end
 	for i,v in ipairs(Mods) do
 		if v.update then
 			local status,err = xpcall(v.update,modErr,...)
@@ -84,7 +113,11 @@ end
 function love.draw( ... )
 	love.graphics.setDefaultFilter("nearest","nearest")
 	if state.draw then state.draw(...) end
-	if uimgr.draw then uimgr.draw(...) end
+	for i,v in ipairs(enabledUIs) do
+		if v.draw then
+			v.draw( ... )
+		end
+	end
 	for i,v in ipairs(Mods) do
 		if v.draw then
 			local status,err = xpcall(v.draw,modErr,...)
@@ -95,7 +128,11 @@ end
 -- Control callbacks
 function love.keypressed( ... )
 	if state.keypressed then state.keypressed(...) end
-	if uimgr.keypressed then uimgr.keypressed(...) end
+	for i,v in ipairs(enabledUIs) do
+		if v.keypressed then
+			v.keypressed( ... )
+		end
+	end
 	for i,v in ipairs(Mods) do
 		if v.keypressed then
 			local status,err = xpcall(v.keypressed,modErr,...)
@@ -104,7 +141,11 @@ function love.keypressed( ... )
 end
 function love.keyreleased( ... )
 	if state.keyreleased then state.keyreleased(...) end
-	if uimgr.keyreleased then uimgr.keyreleased(...) end
+	for i,v in ipairs(enabledUIs) do
+		if v.keyreleased then
+			v.keyreleased( ... )
+		end
+	end
 	for i,v in ipairs(Mods) do
 		if v.keyreleased then
 			local status,err = xpcall(v.keyreleased,modErr,...)
@@ -114,7 +155,11 @@ end
 
 function love.mousemoved( ... )
 	if state.mousemoved then state.mousemoved(...) end
-	if uimgr.mousemoved then uimgr.mousemoved(...) end
+	for i,v in ipairs(enabledUIs) do
+		if v.mousemoved then
+			v.mousemoved( ... )
+		end
+	end
 	for i,v in ipairs(Mods) do
 		if v.mousemoved then
 			local status,err = xpcall(v.mousemoved,modErr,...)
@@ -123,7 +168,11 @@ function love.mousemoved( ... )
 end
 function love.mousepressed( ... )
 	if state.mousepressed then state.mousepressed(...) end
-	if uimgr.mousepressed then uimgr.mousepressed(...) end
+	for i,v in ipairs(enabledUIs) do
+		if v.mousepressed then
+			v.mousepressed( ... )
+		end
+	end
 	for i,v in ipairs(Mods) do
 		if v.mousepressed then
 			local status,err = xpcall(v.mousepressed,modErr,...)
@@ -132,7 +181,11 @@ function love.mousepressed( ... )
 end
 function love.mousereleased( ... )
 	if state.mousereleased then state.mousereleased(...) end
-	if uimgr.mousereleased then uimgr.mousereleased(...) end
+	for i,v in ipairs(enabledUIs) do
+		if v.mousereleased then
+			v.mousereleased( ... )
+		end
+	end
 	for i,v in ipairs(Mods) do
 		if v.mousereleased then
 			local status,err = xpcall(v.mousereleased,modErr,...)
@@ -143,7 +196,11 @@ end
 -- Management
 function love.quit( ... )
 	if state.quit then state.quit(...) end
-	if uimgr.quit then uimgr.quit(...) end
+	for i,v in ipairs(enabledUIs) do
+		if v.quit then
+			v.quit( ... )
+		end
+	end
 	for i,v in ipairs(Mods) do
 		if v.quit then
 			local status,err = xpcall(v.quit,modErr,...)
@@ -152,7 +209,11 @@ function love.quit( ... )
 end
 function love.visible( ... )
 	if state.visible then state.visible(...) end
-	if uimgr.visible then uimgr.visible(...) end
+	for i,v in ipairs(enabledUIs) do
+		if v.visible then
+			v.visible( ... )
+		end
+	end
 	for i,v in ipairs(Mods) do
 		if v.visible then
 			local status,err = xpcall(v.visible,modErr,...)
@@ -161,7 +222,11 @@ function love.visible( ... )
 end
 function love.resize( ... )
 	if state.resize then state.resize(...) end
-	if uimgr.resize then uimgr.resize(...) end
+	for i,v in ipairs(enabledUIs) do
+		if v.resize then
+			v.resize( ... )
+		end
+	end
 	for i,v in ipairs(Mods) do
 		if v.resize then
 			local status,err = xpcall(v.resize,modErr,...)
@@ -172,7 +237,11 @@ end
 -- Misc
 function love.textinput( ... )
 	if state.textinput then state.textinput(...) end
-	if uimgr.textinput then uimgr.textinput(...) end
+	for i,v in ipairs(enabledUIs) do
+		if v.textinput then
+			v.textinput( ... )
+		end
+	end
 	for i,v in ipairs(Mods) do
 		if v.textinput then
 			local status,err = xpcall(v.textinput,modErr,...)

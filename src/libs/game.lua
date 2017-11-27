@@ -26,6 +26,7 @@ setmetatable(lib,libmeta)
 lib.world = require("libs/game/world")
 lib.fizzix = require("libs/game/fizzix")
 lib.control = require("libs/game/control")
+lib.system = require("libs/game/system")
 
 -- ==========================================
 return lib

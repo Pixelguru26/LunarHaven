@@ -1,7 +1,7 @@
 local lib = {}
 
 -- ==========================================
-lib.errorBlock = love.graphics.newImage("stockData/errorBlock.png")
+lib.errorBlock = love.graphics.newImage("stockData/tiles/errorBlock.png")
 
 -- ========================================== Blocks & rendering
 

@@ -9,13 +9,13 @@ function UI.load()
 	controls.new("scrlDn",'wd','wr')
 	UI.gradientShader = love.graphics.newShader("stockData/shaders/gradient.fs")
 	UI.img = {
-		default=love.graphics.newImage("stockData/defaultBlock.png"),
-		error=love.graphics.newImage("stockData/errorBlock.png"),
-		metal=love.graphics.newImage("stockData/metalTexture.png"),
-		noise=love.graphics.newImage("stockData/noiseTexture.png"),
-		conduitsLeft=love.graphics.newImage("stockData/conduitOverlayLeft.png"),
-		conduits=love.graphics.newImage("stockData/conduitOverlay.png"),
-		conduitsRight=love.graphics.newImage("stockData/conduitOverlayRight.png")
+		default=love.graphics.newImage("stockData/tiles/defaultBlock.png"),
+		error=love.graphics.newImage("stockData/tiles/errorBlock.png"),
+		metal=love.graphics.newImage("stockData/unimp/metalTexture.png"),
+		noise=love.graphics.newImage("stockData/unimp/noiseTexture.png"),
+		conduitsLeft=love.graphics.newImage("stockData/unimp/conduitOverlayLeft.png"),
+		conduits=love.graphics.newImage("stockData/unimp/conduitOverlay.png"),
+		conduitsRight=love.graphics.newImage("stockData/unimp/conduitOverlayRight.png")
 	}
 
 	UI.resize(gw(),gh())
@@ -50,6 +50,7 @@ end
 
 function UI.draw()
 	love.graphics.reset()
+	love.graphics.setDefaultFilter("nearest","nearest")
 
 	-- hotbar
 	love.graphics.draw(UI.hotBarCanv,gw()-ui.hotBarWidth*gw(),gh()*ui.hotBarMargin)
@@ -62,12 +63,15 @@ function UI.draw()
 	local di = hw/2 -- unified dimension of item slot
 
 	love.graphics.setScissor(xi,yi,w,h)
+	-- render hotbar items
 	for y = 0,8 do
 		local xPos = xi+(w/2-di/2)
 		local yPos = yi+y*di+y*ui.hotBarGap*hw-UI.hotbar.scroll*(di+ui.hotBarGap*hw)+ui.hotBarGap*hw/2
+		-- highlight/slot
 		love.graphics.setColor(85,255,255,y+1==UI.hotbar.selIndex and 255 or 255/2)
 		love.graphics.rectangle("fill",xPos,yPos,di,di)
 		love.graphics.setColor(255,255,255,255)
+		-- render item image
 		if UI.hotbar[y+1] and UI.hotbar[y+1].frames then
 			local img = UI.hotbar[y+1].frames.tile or UI.hotbar[y+1].frames.icon or UI.img.error
 			local w = di-di*ui.hotBarPadding*2
@@ -228,6 +232,7 @@ function UI.shadedRect(x,y,w,h)
 	local recImg = love.graphics.newImage(love.image.newImageData(w,h))
 	love.graphics.draw(recImg,x,y)
 end
+
 function UI.lineRect(x,y,w,h,lw)
 	love.graphics.rectangle("fill",x,y,w,lw) -- top
 	love.graphics.rectangle("fill",x,y+h-lw,w,lw) -- bottom

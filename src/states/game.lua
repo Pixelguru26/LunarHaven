@@ -15,9 +15,15 @@ world.fizzix = {
 deltas = {c=0,n=0} -- purely for debugging
 
 function state.load()
+	love.graphics.setDefaultFilter("nearest","nearest")
+	UIMngr["hotbar"] = love.filesystem.isFile("uis/hotbar.lua") and require("uis/hotbar")
+	--UIMngr["pixelEditor"] = love.filesystem.isFile("uis/pixelEditor.lua") and require("uis/pixelEditor")
+	game.system.enableUI("hotbar")
+	--game.system.enableUI("pixelEditor")
+	love.graphics.setDefaultFilter("nearest","nearest")
 	blocks.default = {
 		frames = {
-			tile = love.graphics.newImage("stockData/defaultBlock.png")
+			tile = love.graphics.newImage("stockData/tiles/defaultBlock.png")
 		},
 		properties = {
 			layer = 4,
@@ -26,7 +32,7 @@ function state.load()
 	}
 	blocks.defaultBG = {
 		frames = {
-			tile = love.graphics.newImage("stockData/defaultBG.png")
+			tile = love.graphics.newImage("stockData/tiles/defaultBGBlock.png")
 		},
 		properties = {
 			layer = 0,
@@ -35,7 +41,7 @@ function state.load()
 	}
 	blocks["test Pillar"] = {
 		frames = {
-			tile = love.graphics.newImage("stockData/pillarBlock.png")
+			tile = love.graphics.newImage("stockData/tiles/pillarBlock.png")
 		},
 		properties = {
 			layer = 4,
@@ -44,7 +50,7 @@ function state.load()
 	}
 	blocks["test Roof"] = {
 		frames = {
-			tile = love.graphics.newImage("stockData/roofBlock.png")
+			tile = love.graphics.newImage("stockData/tiles/roofBlock.png")
 		},
 		properties = {
 			layer = 4,
@@ -61,11 +67,11 @@ function state.load()
 
 	worldLib.insertEntity(world,require("stockData/player"))
 
-	if uimgr.hotbar then
-		table.insert(uimgr.hotbar,blocks.default)
-		table.insert(uimgr.hotbar,blocks.defaultBG)
-		table.insert(uimgr.hotbar,blocks["test Pillar"])
-		table.insert(uimgr.hotbar,blocks["test Roof"])
+	if UIMngr["hotbar"] and UIMngr["hotbar"].hotbar then
+		table.insert(UIMngr["hotbar"].hotbar,blocks.default)
+		table.insert(UIMngr["hotbar"].hotbar,blocks.defaultBG)
+		table.insert(UIMngr["hotbar"].hotbar,blocks["test Pillar"])
+		table.insert(UIMngr["hotbar"].hotbar,blocks["test Roof"])
 	end
 	love.mouse.setCursor(love.mouse.newCursor(love.image.newImageData("stockData/cursor.png")))
 
