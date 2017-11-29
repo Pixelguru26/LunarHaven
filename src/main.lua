@@ -38,8 +38,10 @@ function love.load( ... )
 			pfile = popen('ls -a "'..modsDir..'"') -- for linux?
 		end
 		for filename in pfile:lines() do
-			i = i + 1
-			t[i] = filename
+			if filename~="." and filename~=".." then
+				i = i + 1
+				t[i] = filename
+			end
 		end
 		pfile:close()
 

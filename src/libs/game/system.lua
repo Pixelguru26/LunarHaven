@@ -23,6 +23,13 @@ function lib.disableAllUIs()
 	enabledUIS = {}
 end
 
+function lib.isUIEnabled(name)
+	for k,v in pairs(enabledUIs) do
+		if k==name then return true end
+	end
+	return false
+end
+
 function lib.saveGFXState()
 	return {
 		love.graphics.getBackgroundColor(),

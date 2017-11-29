@@ -195,6 +195,14 @@ _RECTANGLE.data={}
 		return iter,self,other
 	end
 
+	function _RECTANGLE.regressB(self,vec)
+		return _VECTOR(math.floor((vec.x-self.x)/self.w)+1,math.floor((vec.y-self.y)/self.h)+1)
+	end
+	function _RECTANGLE.regress(self,area,vec)
+		local v = self:regressB(vec)
+		return v.x+v.y*math.floor(area.w/self.w)
+	end
+
 function _RECTANGLE.__index(t,k,v,...)
 	local args={...}
 	if v then

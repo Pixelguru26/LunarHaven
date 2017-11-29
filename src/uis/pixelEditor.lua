@@ -4,6 +4,7 @@ local controls = game.control
 local framedRect = require("libs/frameRect")
 
 function UI.load()
+	UI.clock = 0
 	love.graphics.setDefaultFilter("nearest","nearest")
 	UI.img = {
 		TL = love.graphics.newImage("stockData/UI/UI2_border1_TL.png"),
@@ -40,8 +41,10 @@ function UI.load()
 	}
 end
 
+function UI.update(dt) UI.clock = UI.clock + dt end
+
 function UI.draw()
-	local scale = ui.editorSpriteScale
+	local scale = ui.spriteScale
 	local dims = Rect(ui.editorPaddingLeft*scale,ui.editorPaddingTop*scale,0,0)
 	dims.w = love.graphics.getWidth() - ui.editorPaddingRight*scale - ui.hotBarWidth*love.graphics.getWidth() - dims.x
 	dims.h = love.graphics.getHeight() - ui.editorPaddingBottom*scale - dims.y
@@ -83,14 +86,34 @@ function UI.draw()
 	love.graphics.draw(UI.img.etr,dims.r,dims.b,0,scale,scale,UI.img.etr:getWidth()-1,UI.img.etr:getHeight()-1) -- enter button
 
 	-- color boxes - KEEP OUT OF RESIZE!
-	local area = Rect(dims.r-scale,dims.y,UI.img.cbx:getWidth()*scale,dims.h)
-	local box = Rect(dims.r-scale,dims.y,UI.img.cbx:getWidth()*scale,UI.img.cbx:getHeight()*scale+scale)
+	local area = Rect(dims.r-scale,dims.y+UI.img.cbx:getHeight()*2*scale,UI.img.cbx:getWidth()*scale,dims.h-UI.img.cbx:getHeight()*5*scale)
+	local box = Rect(dims.r-scale,dims.y+UI.img.cbx:getHeight()*(2-(UI.clock%1))*scale,UI.img.cbx:getWidth()*scale,UI.img.cbx:getHeight()*scale+scale)
+	local i,index = -1,box:regress(area,Vec(love.mouse.getX(),love.mouse.getY()))
+	print(index)
+	love.graphics.setScissor(area.x,area.y,area.w,area.h)
+	for _,box in area:iter(box) do
+		i = i + 1
+		if i==index then
+			love.graphics.setColor(255,0,0)
+		end
+		--love.graphics.rectangle("line",box.x,box.y,box.w,box.h)
+		love.graphics.draw(UI.img.cbx,box.x,box.y,0,scale,scale)
+		love.graphics.setColor(255,255,255,255)
+	end
+	love.graphics.setScissor()
+	area:del()
+	box:del()
 
+	-- frame boxes - KEEP OUT OF RESIZE!
+	area = Rect(dims.x,dims.b-(UI.img.fM:getHeight()-1)*scale,dims.w*ui.editorFramesNameRatio-UI.img.etr:getWidth()*scale,UI.img.fM:getHeight()*scale)
+	box = Rect(area.x,area.y,area.w*ui.editorFrameSizeRatio,area.h)
+	love.graphics.setScissor(area.x,area.y,area.w,area.h)
 	for _,box in area:iter(box) do
 		love.graphics.rectangle("line",box.x,box.y,box.w,box.h)
 	end
-
+	love.graphics.setScissor()
 	area:del()
+	box:del()
 end
 
 function UI.resize(x,y)

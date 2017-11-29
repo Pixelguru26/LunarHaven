@@ -17,9 +17,9 @@ deltas = {c=0,n=0} -- purely for debugging
 function state.load()
 	love.graphics.setDefaultFilter("nearest","nearest")
 	UIMngr["hotbar"] = love.filesystem.isFile("uis/hotbar.lua") and require("uis/hotbar")
-	--UIMngr["pixelEditor"] = love.filesystem.isFile("uis/pixelEditor.lua") and require("uis/pixelEditor")
+	UIMngr["pixelEditor"] = love.filesystem.isFile("uis/pixelEditor.lua") and require("uis/pixelEditor")
 	game.system.enableUI("hotbar")
-	--game.system.enableUI("pixelEditor")
+	game.system.enableUI("pixelEditor")
 	love.graphics.setDefaultFilter("nearest","nearest")
 	blocks.default = {
 		frames = {
