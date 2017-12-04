@@ -6,6 +6,8 @@ local framedRect = require("libs/frameRect")
 function UI.load()
 	love.graphics.setDefaultFilter("nearest","nearest")
 	UI.img = {
+		err = love.graphics.newImage("stockData/tiles/errorBlock.png"),
+
 		TL = love.graphics.newImage("stockData/UI/UI1_border1_TL.png"),
 		TR = love.graphics.newImage("stockData/UI/UI1_border1_TR.png"),
 		BL = love.graphics.newImage("stockData/UI/UI1_border1_BL.png"),
@@ -24,6 +26,7 @@ function UI.load()
 
 		bgCol = love.graphics.newImage("stockData/UI/UI2_backg_color.png"),
 	}
+	UI.baseFont = love.graphics.newFont(1)
 	UI.resize(gw(),gh())
 end
 
@@ -35,6 +38,34 @@ function UI.draw()
 		love.graphics.setColor(UI.img.bgCol:getData():getPixel(0,0))
 		love.graphics.rectangle("fill",UI.bounds.x,UI.bounds.y-scale,UI.bounds.w,UI.bounds.h+scale)
 		love.graphics.setColor(255,255,255,255)
+
+		-- items
+		love.graphics.setScissor(UI.bounds.x,UI.bounds.y,UI.bounds.w,UI.bounds.h)
+		local padding = ui.hotBarPadding*ui.hotBarWidth*love.graphics.getWidth()
+		local y = UI.bounds.y+padding - UI.hotbar.scroll*(UI.bounds.w+padding)
+		for i=1,9 do
+			local bm1,bm2 = love.graphics.getBlendMode()
+			local font = love.graphics.getFont()
+			love.graphics.setBlendMode("additive","alpha")
+			love.graphics.setColor(UI.img.bgCol:getData():getPixel(0,0))
+			love.graphics.rectangle("fill",UI.bounds.x+padding,y,UI.bounds.w-padding*2,UI.bounds.w-padding*2)
+			love.graphics.rectangle("line",UI.bounds.x+padding,y,UI.bounds.w-padding*2,UI.bounds.w-padding*2)
+			love.graphics.setFont(UI.bigFont)
+			love.graphics.printf(i,UI.bounds.x+padding,y-padding*2,UI.bounds.w-padding*2,"center")
+			love.graphics.setFont(font)
+			love.graphics.setColor(255,255,255,255)
+			if i==UI.hotbar.selIndex then
+				love.graphics.rectangle("line",UI.bounds.x+padding,y,UI.bounds.w-padding*2,UI.bounds.w-padding*2)
+			end
+			love.graphics.setBlendMode(bm1,bm2)
+			if UI.hotbar[i] then
+				local img = UI.hotbar[i].frames.tile or UI.hotbar[i].frames.icon or UI.hotbar[i].frames[1] or UI.img.err
+				love.graphics.draw(img,UI.bounds.x+padding*2,y+padding,0,(UI.bounds.w-padding*4)/img:getWidth(),(UI.bounds.w-padding*4)/img:getHeight())
+			end
+			y = y + UI.bounds.w-padding*2 + padding
+		end
+		love.graphics.setScissor()
+		-- ==========================================
 
 		framedRect(UI.bounds,UI.img.TL,UI.img.TR,UI.img.BL,UI.img.BR,UI.img.T,UI.img.L,UI.img.B,UI.img.R,true,false,scale,scale)
 
@@ -52,8 +83,26 @@ function UI.draw()
 	end
 end
 
+function UI.mousepressed(x,y,b)
+	local pos = Vec(x,y)
+
+	if pos:isWithinRec(UI.bounds) then
+		local itmH=(UI.bounds.w-ui.hotBarPadding*ui.hotBarWidth*love.graphics.getWidth())
+		local min,max = 0, 9-(UI.bounds.h/itmH)
+		if b=="wu" then
+			UI.hotbar.scroll = math.Limit(UI.hotbar.scroll - .25,min,max)
+		end
+		if b=="wd" then
+			UI.hotbar.scroll = math.Limit(UI.hotbar.scroll + .25,min,max)
+		end
+	end
+
+	pos:del()
+end
+
 function UI.resize(w,h)
 	UI.bounds = Rect(gw()-gw()*ui.hotBarWidth,(gh()-gh()*ui.hotBarHeight)/2,gw()*ui.hotBarWidth,gh()*ui.hotBarHeight)
+	UI.bigFont = love.graphics.newFont(UI.bounds.w/UI.baseFont:getHeight())
 end
 
 return UI

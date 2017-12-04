@@ -21,8 +21,9 @@ _CONSTANTS = {
 		spriteScale = 2, -- general sprite section scaling for this mess
 
 		-- hotbar constants - Georjo
-		hotBarWidth = 1/8, -- this*screenwidth
+		hotBarWidth = 1/12, -- this*screenwidth
 		hotBarHeight = 17/20, -- this*screenheight
+		hotBarPadding = 1/20, -- this*hotBarWidth
 
 		-- pixel editor constants - Georjo
 		editorPaddingLeft = 16, -- this*scale
@@ -30,7 +31,8 @@ _CONSTANTS = {
 		editorPaddingTop = 16, -- this*scale
 		editorPaddingBottom = 16, -- h = screenheight - this*scale
 		editorFramesNameRatio = 4/5, -- ratio of frame selector width to UI bottom width
-		editorFrameSizeRatio = 1/10 -- w = this*frameboxwidth
+		editorFrameSizeRatio = 1/10, -- w = this*frameboxwidth
+		editorShadeDiff = 51
 	},
 	modsDir = love.filesystem.getSourceBaseDirectory().."/mods"
 }

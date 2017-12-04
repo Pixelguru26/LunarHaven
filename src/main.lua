@@ -117,7 +117,8 @@ function love.draw( ... )
 	if state.draw then state.draw(...) end
 	for i,v in ipairs(enabledUIs) do
 		if v.draw then
-			v.draw( ... )
+			--local status = pcall(v.draw)
+			v.draw()
 		end
 	end
 	for i,v in ipairs(Mods) do

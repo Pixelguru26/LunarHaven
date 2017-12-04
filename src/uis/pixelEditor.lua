@@ -1,7 +1,8 @@
-local UI = {}
+local UI = {colors={scroll=0,current=1,shade=0,[0]={0,0,0,0},[1]={0,0,0,255},[2]={255,255,255,255}},frames={scroll=0,zoom=1,offset=Vec(0,0),current=1}}
 local game = require("libs/game")
 local controls = game.control
 local framedRect = require("libs/frameRect")
+local trx = require("libs/Trx")
 
 function UI.load()
 	UI.clock = 0
@@ -39,11 +40,22 @@ function UI.load()
 
 		bgCol = love.graphics.newImage("stockData/UI/UI2_backg_color.png"),
 	}
+	UI.boxes = {}
+	UI.resize(love.graphics.getWidth(),love.graphics.getHeight())
+	UI.frames[1] = {palette={},imgData={},img=love.graphics.newCanvas(64,64)}
+	for x=0,64 do
+		UI.frames[1].imgData[x]={}
+		for y=0,64 do
+			UI.frames[1].imgData[x][y]=0
+		end
+	end
+	UI.frames[1].img:clear(255,255,255,255)
 end
 
 function UI.update(dt) UI.clock = UI.clock + dt end
 
 function UI.draw()
+
 	local scale = ui.spriteScale
 	local dims = Rect(ui.editorPaddingLeft*scale,ui.editorPaddingTop*scale,0,0)
 	dims.w = love.graphics.getWidth() - ui.editorPaddingRight*scale - ui.hotBarWidth*love.graphics.getWidth() - dims.x
@@ -53,6 +65,111 @@ function UI.draw()
 	love.graphics.setColor(UI.img.bgCol:getData():getPixel(0,0))
 	love.graphics.rectangle("fill",dims.x,dims.y,dims.w,dims.h)
 	love.graphics.setColor(255,255,255,255)
+
+	love.graphics.setScissor(dims.x,dims.y,dims.w,dims.h)
+	love.graphics.draw(
+		UI.frames[UI.frames.current].img,
+		dims.x+UI.frames.offset.x,
+		dims.y+UI.frames.offset.y,
+		0,UI.frames.zoom,UI.frames.zoom,
+		UI.frames[UI.frames.current].img:getWidth()/2,
+		UI.frames[UI.frames.current].img:getHeight()/2)
+	love.graphics.setScissor()
+
+	love.graphics.draw(UI.UICanv,0,0)
+
+	-- color boxes - KEEP OUT OF RESIZE!
+	local area = Rect(
+		dims.r-scale,
+		dims.y+UI.img.cbx:getHeight()*2*scale,
+		UI.img.cbx:getWidth()*scale,
+		dims.h-UI.img.cbx:getHeight()*5*scale
+	)
+	local box = Rect(
+		dims.r-scale,
+		dims.y+UI.img.cbx:getHeight()*scale - UI.colors.scroll*UI.img.cbx:getHeight()*scale,
+		UI.img.cbx:getWidth()*scale,
+		UI.img.cbx:getHeight()*scale+scale
+	)
+	local i,index = -1,box:regress(area,Vec(love.mouse.getX(),love.mouse.getY()))
+	love.graphics.setScissor(area.x,area.y,area.w,area.h)
+	for box in area:iter(box) do
+		i = i + 1
+		love.graphics.draw(UI.img.cbx,box.x,box.y,0,scale,scale)
+		if UI.colors[i] then
+			love.graphics.setColor(math.Limit(UI.colors[i][1]-ui.editorShadeDiff,0,255),math.Limit(UI.colors[i][2]-ui.editorShadeDiff,0,255),math.Limit(UI.colors[i][3]-ui.editorShadeDiff,0,255),UI.colors[i][4])
+			love.graphics.rectangle("fill",box.x+5*scale,box.y+scale,box.h-5*scale,box.h-5*scale)
+			love.graphics.setColor(unpack(UI.colors[i]))
+			love.graphics.rectangle("fill",box.x+11*scale,box.y+scale,box.h-5*scale,box.h-5*scale)
+			love.graphics.setColor(math.Limit(UI.colors[i][1]+ui.editorShadeDiff,0,255),math.Limit(UI.colors[i][2]+ui.editorShadeDiff,0,255),math.Limit(UI.colors[i][3]+ui.editorShadeDiff,0,255),UI.colors[i][4])
+			love.graphics.rectangle("fill",box.x+17*scale,box.y+scale,box.h-5*scale,box.h-5*scale)
+			love.graphics.setColor(255,255,255,255)
+		end
+		if i==index-2 and Vec(love.mouse.getX(),love.mouse.getY()):isWithinRec(area) then
+			love.graphics.setColor(255,0,0)
+			love.graphics.rectangle("line",box.x,box.y,UI.img.cbx:getWidth()*scale,UI.img.cbx:getHeight()*scale)
+			love.graphics.print(i,box.x,box.y+(box.h/2-love.graphics.getFont():getHeight()/2))
+			love.graphics.setColor(255,255,255,255)
+			love.graphics.rectangle("line",box.x+5*scale,box.y+scale,box.h-5*scale,box.h-5*scale)
+			love.graphics.rectangle("line",box.x+11*scale,box.y+scale,box.h-5*scale,box.h-5*scale)
+			love.graphics.rectangle("line",box.x+17*scale,box.y+scale,box.h-5*scale,box.h-5*scale)
+		end
+	end
+	love.graphics.setScissor()
+	area:del()
+	box:del()
+
+	-- frame boxes - KEEP OUT OF RESIZE!
+	area = Rect(dims.x,dims.b-(UI.img.fM:getHeight()-1)*scale,dims.w*ui.editorFramesNameRatio-UI.img.etr:getWidth()*scale,UI.img.fM:getHeight()*scale)
+	box = Rect(area.x,area.y,area.w*ui.editorFrameSizeRatio,area.h)
+	love.graphics.setScissor(area.x,area.y,area.w,area.h)
+	for _,box in area:iter(box) do
+		love.graphics.rectangle("line",box.x,box.y,box.w,box.h)
+	end
+	love.graphics.setScissor()
+	area:del()
+	box:del()
+end
+
+function UI.mousemoved(x,y,dx,dy)
+	local scale = ui.spriteScale
+
+	local dims = Rect(ui.editorPaddingLeft*scale,ui.editorPaddingTop*scale,0,0)
+
+	dims.w = love.graphics.getWidth() - dims.x - (ui.editorPaddingRight*scale + ui.hotBarWidth*love.graphics.getWidth())
+	dims.h = love.graphics.getHeight() - dims.y - ui.editorPaddingBottom*scale
+
+	local pos = Vec(x,y)
+	local dpos = Vec(dx,dy)
+	local frame = UI.frames[UI.frames.current]
+	local frameDims = Vec(frame.img:getWidth(),frame.img:getHeight())
+
+	if love.mouse.isDown("m") then
+		if pos:isWithinRec(dims) then
+			UI.frames.offset:inc(dpos)
+		end
+		--UI.frames.offset = UI.frames.offset:limit(Vec.zero,dims.dims-frameDims*UI.frames.zoom)
+	end
+
+	if love.mouse.isDown("l") then
+		UI.drawLine(UI.fromSX(x),UI.fromSY(y),dx/UI.frames.zoom,dy/UI.frames.zoom,unpack(UI.getCColor()))
+	elseif love.mouse.isDown("r") then
+		UI.drawLine(UI.fromSX(x),UI.fromSY(y),dx/UI.frames.zoom,dy/UI.frames.zoom,unpack(UI.getCColor(0,0)))
+	end
+
+	dpos:del()
+	pos:del()
+	dims:del()
+end
+
+function UI.resize(w,h)
+	UI.UICanv = love.graphics.newCanvas(w,h)
+	love.graphics.setCanvas(UI.UICanv)
+
+	local scale = ui.spriteScale
+	local dims = Rect(ui.editorPaddingLeft*scale,ui.editorPaddingTop*scale,0,0)
+	dims.w = love.graphics.getWidth() - ui.editorPaddingRight*scale - ui.hotBarWidth*love.graphics.getWidth() - dims.x
+	dims.h = love.graphics.getHeight() - ui.editorPaddingBottom*scale - dims.y
 
 	-- border
 	framedRect(dims,UI.img.TL,UI.img.TR,UI.img.BL,UI.img.BR,UI.img.T,UI.img.L,UI.img.B,UI.img.R,true,false,scale,scale)
@@ -72,9 +189,17 @@ function UI.draw()
 	-- name box
 	progR = dims.x+(ui.editorFramesNameRatio*dims.w-UI.img.etr:getWidth()*scale)
 	progL = dims.r-(UI.img.etr:getWidth()-2)*scale
+	UI.nameBoxTrx = trx("",
+		progR+scale*3,
+		dims.b-UI.img.nM:getHeight()+scale,
+		progL-progR-UI.img.nL:getWidth()*scale-UI.img.nR:getWidth()*scale,
+		UI.img.nM:getHeight()-scale*2,
+		true)
+	UI.nameBoxTrx:load()
 	love.graphics.draw(UI.img.nL,progR,dims.b,0,scale,scale,0,UI.img.nL:getHeight()-1); progR = progR + UI.img.nL:getWidth()*scale
 	love.graphics.draw(UI.img.nR,progL,dims.b,0,scale,scale,UI.img.nR:getWidth(),UI.img.nR:getHeight()-1); progL = progL - UI.img.nR:getWidth()*scale
 	love.graphics.draw(UI.img.nM,progL,dims.b,0,(progR-progL)/UI.img.nM:getWidth(),scale,0,UI.img.nM:getHeight()-1)
+
 
 	-- frames
 	progR = dims.x
@@ -85,55 +210,140 @@ function UI.draw()
 
 	love.graphics.draw(UI.img.etr,dims.r,dims.b,0,scale,scale,UI.img.etr:getWidth()-1,UI.img.etr:getHeight()-1) -- enter button
 
-	-- color boxes - KEEP OUT OF RESIZE!
-	local area = Rect(dims.r-scale,dims.y+UI.img.cbx:getHeight()*2*scale,UI.img.cbx:getWidth()*scale,dims.h-UI.img.cbx:getHeight()*5*scale)
-	local box = Rect(dims.r-scale,dims.y+UI.img.cbx:getHeight()*(2-(UI.clock%1))*scale,UI.img.cbx:getWidth()*scale,UI.img.cbx:getHeight()*scale+scale)
-	local i,index = -1,box:regress(area,Vec(love.mouse.getX(),love.mouse.getY()))
-	print(index)
-	love.graphics.setScissor(area.x,area.y,area.w,area.h)
-	for _,box in area:iter(box) do
-		i = i + 1
-		if i==index then
-			love.graphics.setColor(255,0,0)
-		end
-		--love.graphics.rectangle("line",box.x,box.y,box.w,box.h)
-		love.graphics.draw(UI.img.cbx,box.x,box.y,0,scale,scale)
-		love.graphics.setColor(255,255,255,255)
-	end
-	love.graphics.setScissor()
-	area:del()
-	box:del()
-
-	-- frame boxes - KEEP OUT OF RESIZE!
-	area = Rect(dims.x,dims.b-(UI.img.fM:getHeight()-1)*scale,dims.w*ui.editorFramesNameRatio-UI.img.etr:getWidth()*scale,UI.img.fM:getHeight()*scale)
-	box = Rect(area.x,area.y,area.w*ui.editorFrameSizeRatio,area.h)
-	love.graphics.setScissor(area.x,area.y,area.w,area.h)
-	for _,box in area:iter(box) do
-		love.graphics.rectangle("line",box.x,box.y,box.w,box.h)
-	end
-	love.graphics.setScissor()
-	area:del()
-	box:del()
+	dims:del()
+	love.graphics.setCanvas()
 end
 
-function UI.resize(x,y)
+function UI.mousepressed(x,y,b)
+	local scale = ui.spriteScale
+	local dims = Rect(ui.editorPaddingLeft*scale,ui.editorPaddingTop*scale,0,0)
+	dims.w = love.graphics.getWidth() - ui.editorPaddingRight*scale - ui.hotBarWidth*love.graphics.getWidth() - dims.x
+	dims.h = love.graphics.getHeight() - ui.editorPaddingBottom*scale - dims.y
 
+	local colorDims = Rect(dims.r-scale,dims.y+UI.img.cbx:getHeight()*2*scale,UI.img.cbx:getWidth()*scale,dims.h-UI.img.cbx:getHeight()*5*scale)
+
+	local pos = Vec(x,y)
+
+	if b=="wu" then
+		if x>dims.r then
+			UI.colors.scroll = math.Limit(UI.colors.scroll-.4,0,math.huge)
+		elseif pos:isWithinRec(dims) then
+			UI.frames.zoom = UI.frames.zoom + .1
+		end
+	elseif b=="wd" then
+		if x>dims.r then
+			UI.colors.scroll = math.Limit(UI.colors.scroll+.4,0,math.huge)
+		elseif pos:isWithinRec(dims) then
+			UI.frames.zoom = UI.frames.zoom - .1
+		end
+	end
+
+	if pos:isWithinRec(dims) then
+		if b=="l" then
+			UI.drawPixel(UI.fromSX(x),UI.fromSY(y),unpack(UI.getCColor()))
+		elseif b=="r" then
+			UI.drawPixel(UI.fromSX(x),UI.fromSY(y),unpack(UI.getCColor(0,0)))
+		end
+	elseif b=="l" and pos:isWithinRec(colorDims) then
+		local box = Rect(dims.r-scale,dims.y+UI.img.cbx:getHeight()*(2-(UI.colors.scroll%1)*UI.img.cbx:getHeight())*scale,UI.img.cbx:getWidth()*scale,UI.img.cbx:getHeight()*scale+scale)
+		local index = box:regress(colorDims,Vec(love.mouse.getX(),love.mouse.getY()))-1
+
+		local shade=Rect(box.x+5*scale,box.y+scale+(index-1)*box.h,box.h-5*scale,box.h-5*scale)
+		local main=Rect(box.x+11*scale,box.y+scale+(index-1)*box.h,box.h-5*scale,box.h-5*scale)
+		local light=Rect(box.x+17*scale,box.y+scale+(index-1)*box.h,box.h-5*scale,box.h-5*scale)
+
+		if pos:isWithinRec(shade) then
+			if index==UI.colors.current then game.system.enableUI("colorPicker") end
+			UI.colors.current = index
+			UI.colors.shade = -1
+		end
+		if pos:isWithinRec(main) then
+			if index==UI.colors.current then game.system.enableUI("colorPicker") end
+			UI.colors.current = index
+			UI.colors.shade = 0
+		end
+		if pos:isWithinRec(light) then
+			if index==UI.colors.current then game.system.enableUI("colorPicker") end
+			UI.colors.current = index
+			UI.colors.shade = 1
+		end
+		UI.getCColor()
+		-- print(UI.colors.current)
+		-- print(unpack(UI.getCColor()))
+
+		box:del();shade:del();main:del();light:del()
+	end
+
+	dims:del()
+	pos:del()
+	colorDims:del()
 end
 
 -- ==========================================
 
-function UI.blockLine(i,x1,y1,x2,y2)
-
+function UI.getCColor(i,s)
+	i = i or UI.colors.current
+	s = s or UI.colors.shade
+	if not UI.colors[i] then
+		UI.colors[i]={255,255,255,255}
+	end
+	local c = UI.colors[i]
+	if s~=0 then
+		local cn = {math.Limit(c[1]+s*ui.editorShadeDiff,0,255),math.Limit(c[2]+s*ui.editorShadeDiff,0,255),math.Limit(c[3]+s*ui.editorShadeDiff,0,255),c[4]}
+		return cn
+	else
+		return c
+	end
 end
 
-function UI.placeBlock(i,x,y)
-	if controls.isDown("destMod") then
-		game.placeBlock(world,nil,x,y)
-	elseif UI.hotbar[i] and not game.getTile(world,x,y) then
-		game.placeBlock(world,UI.hotbar[i],x,y)
-	elseif not UI.hotbar[i] then
-		game.placeBlock(world,nil,x,y)
+function UI.fromSX(x) -- from screen x to canvas x
+	return math.floor((x-ui.editorPaddingLeft*ui.spriteScale-UI.frames.offset.x+UI.frames[UI.frames.current].img:getWidth()/2*UI.frames.zoom)/UI.frames.zoom)
+end
+function UI.fromSY(y) -- from screen y to canvas y
+	return math.floor((y-ui.editorPaddingTop*ui.spriteScale-UI.frames.offset.y+UI.frames[UI.frames.current].img:getHeight()/2*UI.frames.zoom)/UI.frames.zoom)
+end
+function UI.fromS(x,y) -- from screen coords to canvas coords
+	return UI.fromSX(x),UI.fromSY(y)
+end
+
+function UI.drawPixel(x,y,r,g,b,a)
+	local pos = Vec(x+1,y+1)
+	local bm1,bm2 = love.graphics.getBlendMode()
+	love.graphics.setBlendMode("replace","alpha")
+	love.graphics.setPointSize(0.1)
+	love.graphics.setPointStyle("rough")
+
+	love.graphics.setCanvas(UI.frames[UI.frames.current].img)
+	love.graphics.setColor(r,g,b,a)
+
+	love.graphics.point(pos.x-1,pos.y)
+
+	love.graphics.setCanvas()
+	love.graphics.setBlendMode(bm1,bm2)
+	love.graphics.setColor(255,255,255,255)
+	pos:del()
+end
+
+function UI.drawLine(x,y,dx,dy,r,g,b,a)
+	local bm1,bm2 = love.graphics.getBlendMode()
+	love.graphics.setBlendMode("replace","alpha")
+	love.graphics.setPointSize(1)
+	love.graphics.setPointStyle("rough")
+	love.graphics.setCanvas(UI.frames[UI.frames.current].img)
+	love.graphics.setColor(r,g,b,a)
+
+	local pos = Vec(x,y+1)
+	local dist = Vec(dx/UI.frames.zoom,dy/UI.frames.zoom)
+
+	for i=0,dist.l*4 do
+		love.graphics.point(pos.x+math.cos(dist.a)*i/4,pos.y+math.sin(dist.a)*i/4)
 	end
+
+	love.graphics.setBlendMode(bm1,bm2)
+	love.graphics.setColor(255,255,255,255)
+	love.graphics.setCanvas()
+	pos:del()
+	dist:del()
 end
 
 return UI

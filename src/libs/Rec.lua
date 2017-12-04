@@ -203,49 +203,25 @@ _RECTANGLE.data={}
 		return v.x+v.y*math.floor(area.w/self.w)
 	end
 
-function _RECTANGLE.__index(t,k,v,...)
-	local args={...}
-	if v then
-		if type(_RECTANGLE[k])=='function' and _RECTANGLE.data[k] then
-			return _RECTANGLE[k](t,v,unpack(args))
-		elseif _RECTANGLE[k] then
-			t[_RECTANGLE[k]]=v
-		else
-			return nil
-		end
+function _RECTANGLE.__index(t,k)
+	if type(_RECTANGLE[k])=='function' and _RECTANGLE.data[k] then
+		return _RECTANGLE[k](t)
+	elseif _RECTANGLE[k] and _RECTANGLE.data[k] then
+		return t[_RECTANGLE[k]] or _RECTANGLE[k]
+	elseif _RECTANGLE[k] then
+		return _RECTANGLE[k]
 	else
-		if type(_RECTANGLE[k])=='function' and _RECTANGLE.data[k] then
-			return _RECTANGLE[k](t)
-		elseif _RECTANGLE[k] and _RECTANGLE.data[k] then
-			return t[_RECTANGLE[k]] or _RECTANGLE[k]
-		elseif _RECTANGLE[k] then
-			return _RECTANGLE[k]
-		else
-			return nil
-		end
+		return nil
 	end
 end
 
-function _RECTANGLE.__newindex(t,k,v,...)
-	local args={...}
-	if v then
-		if type(_RECTANGLE[k])=='function' and _RECTANGLE.data[k] then
-			return _RECTANGLE[k](t,v,unpack(args))
-		elseif _RECTANGLE[k] and _RECTANGLE.data[k] then
-			t[_RECTANGLE[k]]=v
-		else
-			rawset(t,k,v)
-		end
+function _RECTANGLE.__newindex(t,k,v)
+	if type(_RECTANGLE[k])=='function' and _RECTANGLE.data[k] then
+		return _RECTANGLE[k](t,v)
+	elseif _RECTANGLE[k] and _RECTANGLE.data[k] then
+		t[_RECTANGLE[k]]=v
 	else
-		if type(_RECTANGLE[k])=='function' and _RECTANGLE.data[k] then
-			return _RECTANGLE[k](t)
-		elseif _RECTANGLE[k] and _RECTANGLE.data[k] then
-			return t[_RECTANGLE[k]] or _RECTANGLE[k]
-		elseif _RECTANGLE[k] then
-			return _RECTANGLE[k]
-		else
-			return rawget(t,k)
-		end
+		rawset(t,k,v)
 	end
 end
 

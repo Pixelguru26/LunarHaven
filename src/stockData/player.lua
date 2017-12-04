@@ -5,19 +5,7 @@ local controls = game.control
 
 local plr = {}
 
-plr.layer = 2
-plr.bounds = Rec(0,0,.95,1)
-plr.vel = Vec(0.2,-0.1)
-plr.onGround = false
-plr.stats = {
-	fric = 3, -- generic physics friction
-	clamp = fizzix.clamp, -- minimum velocity
-	stumble = 10, -- friction value for walking
-	accel = 10, -- walking acceleration
-	airDamper = 100, -- scaling down of acceleration while in air
-	jump = 4, -- jumping impulse velocity
-	speed = 8, -- max walking velocity
-}
+
 
 plr.fizzRects = {}
 
@@ -25,6 +13,19 @@ function plr.load(self)
 	controls.new("mvLeft","left","a")
 	controls.new("mvRight","right","d")
 	controls.new("jump","space","up","w")
+	plr.layer = 2
+	plr.bounds = Rec(0,0,.95,1)
+	plr.vel = Vec(0.2,-0.1)
+	plr.onGround = false
+	plr.stats = {
+		fric = 3, -- generic physics friction
+		clamp = fizzix.clamp, -- minimum velocity
+		stumble = 10, -- friction value for walking
+		accel = 10, -- walking acceleration
+		airDamper = 100, -- scaling down of acceleration while in air
+		jump = 4, -- jumping impulse velocity
+		speed = 8, -- max walking velocity
+	}
 end
 
 function plr.update(self,dt,world,state)

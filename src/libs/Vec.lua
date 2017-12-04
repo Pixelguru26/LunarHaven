@@ -11,53 +11,27 @@ _VECTOR.H=2
 
 _VECTOR.meta={}
 
-function _VECTOR.__index(t,k,v,...)
-	local args={...}
-	if v then
-		if type(_VECTOR[k])=='function' then
-			return _VECTOR[k](t,v)
-		elseif _VECTOR[k] then
-			t[_VECTOR[k]]=v
-		elseif _VECTOR.funcs[k] then
-			return _VECTOR.funcs[k]
-		else
-			return nil
-		end
+function _VECTOR.__index(t,k)
+	if type(_VECTOR[k])=='function' then
+		return _VECTOR[k](t)
+	elseif v~=1 and v~=2 and _VECTOR[k] then
+		return t[_VECTOR[k]] or _VECTOR[k]
+	elseif _VECTOR.funcs[k] then
+		return _VECTOR.funcs[k]
 	else
-		if type(_VECTOR[k])=='function' then
-			return _VECTOR[k](t)
-		elseif _VECTOR[k] then
-			return t[_VECTOR[k]] or _VECTOR[k]
-		elseif _VECTOR.funcs[k] then
-			return _VECTOR.funcs[k]
-		else
-			return nil
-		end
+		return nil
 	end
 end
 
-function _VECTOR.__newindex(t,k,v,...)
-	local args={...}
-	if v then
-		if type(_VECTOR[k])=='function' then
-			return _VECTOR[k](t,v)
-		elseif _VECTOR[k] then
-			t[_VECTOR[k]]=v
-		elseif _VECTOR.funcs[k] then
-			return _VECTOR.funcs[k]
-		else
-			rawset(t,k,v)
-		end
+function _VECTOR.__newindex(t,k,v)
+	if type(_VECTOR[k])=='function' then
+		return _VECTOR[k](t,v)
+	elseif k~=1 and k~=2 and _VECTOR[k] then
+		t[_VECTOR[k]]=v
+	elseif _VECTOR.funcs[k] then
+		rawset(_VECTOR.funcs[k](t),v)
 	else
-		if type(_VECTOR[k])=='function' then
-			return _VECTOR[k](t)
-		elseif _VECTOR[k] then
-			return t[_VECTOR[k]] or _VECTOR[k]
-		elseif _VECTOR.funcs[k] then
-			return _VECTOR.funcs[k]
-		else
-			return nil --HOW DIDJU EVEN
-		end
+		rawset(t,k,v)
 	end
 end
 
@@ -220,8 +194,8 @@ end
 
 function _VECTOR.meta.__call(t,x,y)
 	local v = table.remove(_CACHE,#_CACHE) or {}
-	v.x = x
-	v.y = y
+	v[1] = x
+	v[2] = y
 	return setmetatable(v,_VECTOR)
 end
 
@@ -240,8 +214,47 @@ function _VECTOR.funcs.isWithinRec(self,rect)
 	return type(rect)=="table" and rect.type=="rectangle" and self >= rect.pos1 and self <= rect.pos4
 end
 
+function _VECTOR.funcs.limit(self,min,max)
+	return Vec(
+		self.x < min.x and min.x or (self.x > max.x and max.x or self.x),
+		self.y < min.y and min.y or (self.y > max.y and max.y or self.y)
+		)
+end
+
 function _VECTOR.funcs.del(self)
 	table.insert(_VECTOR._CACHE,self)
+	return self
+end
+
+function _VECTOR.funcs.inc(self,other)
+	self[1] = self[1] + other[1]
+	self[2] = self[2] + other[2]
+	return self
+end
+function _VECTOR.funcs.dec(self,other)
+	self[1] = self[1] - other[1]
+	self[2] = self[2] - other[2]
+	return self
+end
+function _VECTOR.funcs.mul(self,other)
+	self[1] = self[1] * other[1]
+	self[2] = self[2] * other[2]
+	return self
+end
+function _VECTOR.funcs.div(self,other)
+	self[1] = self[1] / other[1]
+	self[2] = self[2] / other[2]
+	return self
+end
+function _VECTOR.funcs.set(self,other)
+	self[1] = other[1]
+	self[2] = other[2]
+	return self
+end
+function _VECTOR.funcs.mod(self,other)
+	self[1] = self[1] % other[1]
+	self[2] = self[2] % other[2]
+	return self
 end
 
 function dist(x1,y1,x2,y2)

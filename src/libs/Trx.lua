@@ -6,6 +6,15 @@ lib.charSize = Rec(0,0,lib.font:getWidth(" "),lib.font:getHeight())
 lib.tabSize = Rec(0,0,lib.font:getWidth("\t"),lib.font:getHeight())
 local meta = {}
 
+-- ========================================== some internal helpers
+
+local function fromSX(obj,x)
+	return math.floor((x-obj.bounds.x)/lib.charSize.w+0.5)
+end
+local function fromSY(obj,y)
+	return math.floor((y-obj.bounds.y)/lib.charSize.h+0.1)
+end
+
 -- ========================================== caret obj
 
 	local caret = {x=0,y=0}
@@ -84,11 +93,32 @@ local meta = {}
 	function selection.clear(self,txt)
 		local ret = {}
 		-- clear first line
+		if self.a.y==self.b.y then
+			table.insert(ret,string.sub(txt[self.a.y],self.a.x-1,self.b.x))
+			txt[self.a.y]=string.sub(txt[self.a.y],1,self.a.x-1)..string.sub(txt[self.b.y],self.b.x)
+		elseif self.a.y<self.b.y then
+			table.insert(ret,string.sub(txt[self.a.y],self.a.x-1,-1))
+			txt[self.a.y]=string.sub(txt[self.a.y],1,self.a.x-1)
+		elseif self.a.y>self.b.y then
+			table.insert(ret,string.sub(txt[self.a.y],1,self.a.x-1))
+			txt[self.a.y]=string.sub(txt[self.a.y],self.a.x-1,-1)
+		end
 		-- clear in betweens
 		for i=self.a.y+1,self.b.y-1 do
 			table.insert(ret,table.remove(txt,i+1))
 		end
 		-- clear last line
+		if self.b.y==self.a.y then
+			table.insert(ret,string.sub(txt[self.b.y],self.b.x-1,self.b.x))
+			txt[self.b.y]=string.sub(txt[self.b.y],1,self.b.x-1)..string.sub(txt[self.a.y],self.a.x)
+		elseif self.b.y<self.a.y then
+			table.insert(ret,string.sub(txt[self.b.y],self.b.x-1,-1))
+			txt[self.b.y]=string.sub(txt[self.b.y],1,self.b.x-1)
+		elseif self.b.y>self.a.y then
+			table.insert(ret,string.sub(txt[self.b.y],1,self.b.x-1))
+			txt[self.b.y]=string.sub(txt[self.b.y],self.b.x-1,-1)
+		end
+		return ret
 	end
 
 	function selection.set(self,a,b,txt)
@@ -107,9 +137,9 @@ local meta = {}
 local ex = {}
 
 function ex.load(self)
-	self.txt=self.txt or {"this is some testy text!","moar testy text"}
+	self.txt=self.txt or {"this is some testy text!"}
 	self.cars={caret.new(0,0,self.txt)}
-	self.sels={selection.new(caret.new(0,0,self.txt),caret.new(1,0,self.txt))}
+	self.sels={}
 	self.canv=love.graphics.newCanvas(self.bounds.w,self.bounds.h)
 	self.redrawLines={}
 	self:redraw()
@@ -193,7 +223,7 @@ function ex.keypressed(self,key)
 	end
 	if key=="home" then for i,v in ipairs(self.cars) do v.x=0 end end
 	if key=="end" then for i,v in ipairs(self.cars) do v.x=#self.txt[v.y+1] end end
-	if key=="return" then 
+	if key=="return" and not self.monoline then 
 		for i,v in ipairs(self.cars) do
 			local queued = {}
 			for ii,iv in ipairs(self.cars) do
@@ -236,7 +266,7 @@ end
 function ex.mousepressed(self,x,y,b)
 	if b=="l" then
 		if love.keyboard.isDown("lctrl") or love.keyboard.isDown("rctrl") then
-			local caret = caret.new(math.floor((x-self.bounds.x)/lib.charSize.w+0.5),math.floor((y-self.bounds.y)/lib.charSize.h+0.5),self.txt)
+			local caret = caret.new(fromSX(self,x),fromSY(self,y),self.txt)
 			local isDuplicate = false
 			for i,v in ipairs(self.cars) do
 				if v.x==caret.x and v.y==caret.y then
@@ -264,10 +294,11 @@ function ex.mousepressed(self,x,y,b)
 			-- end
 			-- self.cars = temp
 		else
+			self.sels = {}
 			if #self.cars>1 or not self.cars[1] then
-				self.cars = {caret.new(math.floor((x-self.bounds.x)/lib.charSize.w+0.5),math.floor((y-self.bounds.y)/lib.charSize.h+0.5),self.txt)}
+				self.cars = {caret.new(fromSX(self,x),fromSY(self,y),self.txt)}
 			else
-				self.cars[1]:set(math.floor((x-self.bounds.x)/lib.charSize.w+0.5),math.floor((y-self.bounds.y)/lib.charSize.h+0.5),self.txt)
+				self.cars[1]:set(fromSX(self,x),fromSY(self,y),self.txt)
 			end
 		end
 	end
@@ -275,10 +306,25 @@ end
 
 function ex.mousemoved(self,x,y,dx,dy)
 	if love.mouse.isDown("l") then
-		if #self.cars>1 or not self.cars[1] then
-			self.cars = {caret.new(math.floor((x-self.bounds.x)/lib.charSize.w+0.5),math.floor((y-self.bounds.y)/lib.charSize.h+0.5),self.txt)}
+		if #self.cars>0 then
+			self.cars = {}
+		end
+		if #self.sels~=1 then
+			self.sels = {selection.new(
+				caret.new(
+					fromSX(self,x),
+					fromSY(self,y),
+					self.txt),
+				caret.new(
+					fromSX(self,x+dx),
+					fromSY(self,y+dy),
+					self.txt)
+				)
+			}
 		else
-			self.cars[1]:set(math.floor((x-self.bounds.x)/lib.charSize.w+0.5),math.floor((y-self.bounds.y)/lib.charSize.h+0.5),self.txt)
+			self.sels[1].b:set(
+				fromSX(self,x+dx),
+				fromSY(self,y+dy),self.txt)
 		end
 	end
 end
@@ -290,8 +336,8 @@ end
 
 lib.ex = ex
 
-function meta.__call(t,x,y,w,h)
-	return setmetatable({bounds=Rec(x,y,w,h)},{__index=t.ex})
+function meta.__call(t,txt,x,y,w,h,monoline)
+	return setmetatable({bounds=Rec(x,y,w,h),monoline=monoline},{__index=t.ex})
 end
 
 setmetatable(lib,meta)
