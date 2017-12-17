@@ -18,8 +18,9 @@ function state.load()
 	love.graphics.setDefaultFilter("nearest","nearest")
 	UIMngr["hotbar"] = love.filesystem.isFile("uis/hotbar.lua") and require("uis/hotbar")
 	UIMngr["pixelEditor"] = love.filesystem.isFile("uis/pixelEditor.lua") and require("uis/pixelEditor")
+	UIMngr["inventory"] = love.filesystem.isFile("uis/inventory.lua") and require("uis/inventory")
 	game.system.enableUI("hotbar")
-	game.system.enableUI("pixelEditor")
+	game.system.enableUI("inventory")
 	love.graphics.setDefaultFilter("nearest","nearest")
 	blocks.default = {
 		frames = {
@@ -77,6 +78,10 @@ function state.load()
 
 	state.fizzRects = {}
 	world.clock = 0
+
+	if not love.filesystem.exists("localPlr") then
+		game.system.createSaveDir()
+	end
 end
 
 function state.update(dt)

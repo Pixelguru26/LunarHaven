@@ -25,14 +25,15 @@ _CONSTANTS = {
 		hotBarHeight = 17/20, -- this*screenheight
 		hotBarPadding = 1/20, -- this*hotBarWidth
 
-		-- pixel editor constants - Georjo
+		-- ui constants - Georjo
 		editorPaddingLeft = 16, -- this*scale
 		editorPaddingRight = 64, -- w = screenwidth - this*scale - hotBarWidth*screenWidth
 		editorPaddingTop = 16, -- this*scale
 		editorPaddingBottom = 16, -- h = screenheight - this*scale
 		editorFramesNameRatio = 4/5, -- ratio of frame selector width to UI bottom width
 		editorFrameSizeRatio = 1/10, -- w = this*frameboxwidth
-		editorShadeDiff = 51
+		editorShadeDiff = 51,
+		invSideRatio = 1/6 -- this*windowwidth
 	},
 	modsDir = love.filesystem.getSourceBaseDirectory().."/mods"
 }

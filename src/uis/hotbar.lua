@@ -1,4 +1,4 @@
-local UI = {hotbar = {scroll=0,selIndex=1,shown=true}} -- remnant of an older system
+local UI = {hotbar = {scroll=0,selIndex=1,shown=true,clock=0}} -- remnant of an older system
 --@TODO ALPHA: organize sensibly with new system
 require("libs/util")
 local framedRect = require("libs/frameRect")
@@ -30,6 +30,8 @@ function UI.load()
 	UI.resize(gw(),gh())
 end
 
+function UI.update(dt) UI.hotbar.clock = UI.hotbar.clock + dt end
+
 function UI.draw()
 	local scale = ui.spriteScale
 
@@ -48,11 +50,14 @@ function UI.draw()
 			local font = love.graphics.getFont()
 			love.graphics.setBlendMode("additive","alpha")
 			love.graphics.setColor(UI.img.bgCol:getData():getPixel(0,0))
+
 			love.graphics.rectangle("fill",UI.bounds.x+padding,y,UI.bounds.w-padding*2,UI.bounds.w-padding*2)
 			love.graphics.rectangle("line",UI.bounds.x+padding,y,UI.bounds.w-padding*2,UI.bounds.w-padding*2)
+
 			love.graphics.setFont(UI.bigFont)
 			love.graphics.printf(i,UI.bounds.x+padding,y-padding*2,UI.bounds.w-padding*2,"center")
 			love.graphics.setFont(font)
+
 			love.graphics.setColor(255,255,255,255)
 			if i==UI.hotbar.selIndex then
 				love.graphics.rectangle("line",UI.bounds.x+padding,y,UI.bounds.w-padding*2,UI.bounds.w-padding*2)
@@ -62,13 +67,14 @@ function UI.draw()
 				local img = UI.hotbar[i].frames.tile or UI.hotbar[i].frames.icon or UI.hotbar[i].frames[1] or UI.img.err
 				love.graphics.draw(img,UI.bounds.x+padding*2,y+padding,0,(UI.bounds.w-padding*4)/img:getWidth(),(UI.bounds.w-padding*4)/img:getHeight())
 			end
-			y = y + UI.bounds.w-padding*2 + padding
+			y = y + UI.bounds.w-padding
 		end
 		love.graphics.setScissor()
 		-- ==========================================
 
 		framedRect(UI.bounds,UI.img.TL,UI.img.TR,UI.img.BL,UI.img.BR,UI.img.T,UI.img.L,UI.img.B,UI.img.R,true,false,scale,scale)
 
+		-- hiding button thing
 		love.graphics.draw(UI.img.hide,UI.bounds.x-UI.img.L:getWidth()*scale,UI.bounds.y+UI.bounds.h/2-UI.img.hide:getHeight()*scale/2,0,scale,scale,UI.img.hide:getWidth(),0)
 
 		-- buttons :P
@@ -85,16 +91,42 @@ end
 
 function UI.mousepressed(x,y,b)
 	local pos = Vec(x,y)
+	local scale = ui.spriteScale
+	local top_buttons_width = (UI.img.craft:getWidth() + UI.img.up:getWidth() + UI.img.inventory:getWidth())*scale
 
-	if pos:isWithinRec(UI.bounds) then
-		local itmH=(UI.bounds.w-ui.hotBarPadding*ui.hotBarWidth*love.graphics.getWidth())
-		local min,max = 0, 9-(UI.bounds.h/itmH)
-		if b=="wu" then
-			UI.hotbar.scroll = math.Limit(UI.hotbar.scroll - .25,min,max)
+	if UI.hotbar.shown then
+		if pos:isWithinRec(UI.bounds) then
+			local itmH=(UI.bounds.w-ui.hotBarPadding*ui.hotBarWidth*love.graphics.getWidth())
+			local min,max = 0, 9-(UI.bounds.h/itmH)
+			if b=="wu" then
+				UI.hotbar.scroll = math.Limit(UI.hotbar.scroll - .25,min,max)
+			end
+			if b=="wd" then
+				UI.hotbar.scroll = math.Limit(UI.hotbar.scroll + .25,min,max)
+			end
+			if b=="l" then
+				local v = Rec(UI.bounds.x,UI.bounds.y+ui.hotBarPadding*ui.hotBarWidth*love.graphics.getWidth() - UI.hotbar.scroll*(UI.bounds.w+ui.hotBarPadding*ui.hotBarWidth*love.graphics.getWidth()),UI.bounds.w,UI.bounds.w-ui.hotBarPadding*ui.hotBarWidth*love.graphics.getWidth())
+				local index = v:regress(UI.bounds,pos)-1
+
+				UI.hotbar.selIndex = index
+
+				v:del()
+			end
+		elseif b=="l" and pos:isWithinRec(Rec(UI.bounds.x+(UI.bounds.w/2-top_buttons_width/2),UI.bounds.y-UI.img.craft:getHeight()*scale,UI.img.craft:getWidth()*scale,UI.img.craft:getHeight()*scale):del()) then
+			if game.system.isUIEnabled("pixelEditor") then
+				game.system.disableUI("pixelEditor")
+			else
+				game.system.enableUI("pixelEditor")
+			end
+		elseif b=="l" and pos:isWithinRec(Rec(UI.bounds.x+(UI.bounds.w/2-top_buttons_width/2),UI.bounds.y-UI.img.inventory:getHeight()*scale,UI.img.inventory:getWidth()*scale,UI.img.inventory:getHeight()*scale):del()) then
+			if game.system.isUIEnabled("inventory") then
+				game.system.disableUI("inventory")
+			else
+				game.system.enableUI("inventory")
+			end
 		end
-		if b=="wd" then
-			UI.hotbar.scroll = math.Limit(UI.hotbar.scroll + .25,min,max)
-		end
+	else
+
 	end
 
 	pos:del()

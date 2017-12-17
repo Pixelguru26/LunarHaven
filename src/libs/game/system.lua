@@ -63,4 +63,89 @@ function lib.restoreGFXState(state)
 	love.graphics.setWireframe(state[28])
 end
 
+local function tableToDirTree(t,dir)
+	love.filesystem.createDirectory(dir)
+	for k,v in pairs(t) do
+		if type(v)=="table" then
+			if v.isFile then
+				if v.fileType=="lua" then
+					love.filesystem.write(dir.."/"..k..".lua",v.data)
+				elseif v.fileType=="json" then
+					love.filesystem.write(dir.."/"..k..".json",json.encode(v.data))
+				elseif v.fileType=="txt" then
+					love.filesystem.write(dir.."/"..k..".lua",v.data)
+				else
+					love.filesystem.write(dir.."/"..k,v.data)
+				end
+			else
+				tableToDirTree(v,dir.."/"..k)
+			end
+		end
+	end
+end
+local saveDirStructure = {
+	Player = {
+		Inventory = {
+			unsorted = {
+				__layout = {
+					isFile = true,
+					fileType = "json",
+					data = {
+						sorting = "index", -- possible: index, name, type, grid, floating
+						positions = {[1]={0,0}}
+					}
+				}
+			},
+			desktop = {
+				__layout = {
+					isFile = true,
+					fileType = "json",
+					data = {
+						sorting = "grid", -- possible: index, name, type, grid, floating
+						positions = {[1]={0,0}}
+					}
+				}
+			},
+			UI = {
+				__layout = {
+					isFile = true,
+					fileType = "json",
+					data = {
+						sorting = "index",
+						positions = {[1]={0,0}}
+					}
+				}
+			}
+		},
+		__meta = {
+			isFile = true,
+			fileType = "json",
+			data = {
+				name = "Philipp",
+				recent = {"default","1"}
+			}
+		}
+	},
+	Cache = {
+		default = {
+			[1] = {
+				-- this represents a "default" player, the storage for stock items.
+				__meta = {
+					isFile = true,
+					fileType = "json",
+					data = {
+						name = "Lunar Haven Dev Team",
+						status = "Don't mind me, I'm just tinkering with the fabric of time and space for your enjoyment.",
+						rank = 0,
+						integrity = 99
+					}
+				}
+			}
+		}
+	}
+}
+function lib.createSaveDir()
+	tableToDirTree(saveDirStructure,"")
+end
+
 return lib

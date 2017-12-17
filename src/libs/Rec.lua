@@ -1,6 +1,5 @@
 local lib={name="Rec"}
-local Vec
-Vec=assert(_VECTOR or require("Vec")() or require("lib/Vec")() or require("libs/Vec")(), "Cannot find/use 'Vec.lua', this is a requirement for "..lib.name.." to function!")
+local Vec=assert(_VECTOR or require("Vec")() or require("lib/Vec")() or require("libs/Vec")(), "Cannot find/use 'Vec.lua', this is a requirement for "..lib.name.." to function!")
 
 local _RECTANGLE={0,0,0,0,type="rectangle",_CACHE={}}
 local _CACHE = _RECTANGLE._CACHE
@@ -244,6 +243,7 @@ end
 
 function _RECTANGLE.del(v)
 	table.insert(_CACHE,v)
+	return v
 end
 
 

@@ -1,4 +1,4 @@
-local _VECTOR={0,0,funcs={},type="vector",_CACHE={}}
+local _VECTOR={0,0,funcs={},type="vector",_CACHE={C=0}}
 local _CACHE = _VECTOR._CACHE
 _VECTOR.x=1
 _VECTOR.X=1
@@ -104,21 +104,28 @@ end
 	end
 
 	function _VECTOR.__eq(a,b)
-		assert(type(a)=='table',"Attempted equality check of number and vector")
-		assert(type(b)=='table',"Attempted equality check of vector and number")
-		local xl,yl = a.x==b.x,a.y==b.y
-		return xl and yl,xl,yl
+		if type(a)=="number" then
+			return a==b.x and a==b.y
+		elseif type(b)=="number" then
+			return a.x==b and a.y==b
+		end
+		return a.x==b.x and a.y==b.y
 	end
 	function _VECTOR.__lt(a,b)
-		assert(type(a)=='table',"Attempted less than check of number and vector")
-		assert(type(b)=='table',"Attempted less than check of vector and number")
-		return a.x+a.y < b.x+b.y
+		if type(a)=="number" then
+			return a < b.x and a < b.y
+		elseif type(b)=="number" then
+			return a.x < b and a.y < b
+		end
+		return a.x < b.x and a.y < b.y
 	end
 	function _VECTOR.__le(a,b)
-		assert(type(a)=='table',"Attempted less than or equal to check of number and vector")
-		assert(type(b)=='table',"Attempted less than or equal to check of vector and number")
-		local xl,yl = a.x<=b.x,a.y<=b.y
-		return xl and yl,xl,yl
+		if type(a)=="number" then
+			return a<=b.x and a<=b.y
+		elseif type(b)=="number" then
+			return a.x<=b and a.y<=b
+		end
+		return a.x<=b.x and a.y<=b.y
 	end
 
 	-- Vector angle
@@ -193,7 +200,13 @@ end
 
 
 function _VECTOR.meta.__call(t,x,y)
-	local v = table.remove(_CACHE,#_CACHE) or {}
+	local v
+	if _CACHE.C>0 then
+		v=table.remove(_CACHE,_CACHE.C)
+		_CACHE.C = _CACHE.C-1
+	else
+		v = {}
+	end
 	v[1] = x
 	v[2] = y
 	return setmetatable(v,_VECTOR)
@@ -222,7 +235,8 @@ function _VECTOR.funcs.limit(self,min,max)
 end
 
 function _VECTOR.funcs.del(self)
-	table.insert(_VECTOR._CACHE,self)
+	table.insert(_CACHE,self)
+	_CACHE.C = _CACHE.C+1
 	return self
 end
 
