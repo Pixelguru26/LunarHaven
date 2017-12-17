@@ -1,9 +1,14 @@
-local UI = {hotbar = {scroll=0,selIndex=1,shown=true,clock=0}} -- remnant of an older system
+local UI = {hotbar = {scroll=0,selIndex=1,shown=true}} -- remnant of an older system
 --@TODO ALPHA: organize sensibly with new system
 require("libs/util")
+local game = require("libs/game")
 local framedRect = require("libs/frameRect")
 
 function UI.load()
+	controls.new("place",'l')
+	controls.new("destMod",'lctrl','rctrl')
+	controls.new("scrlUp",'wu','wl')
+	controls.new("scrlDn",'wd','wr')
 	love.graphics.setDefaultFilter("nearest","nearest")
 	UI.img = {
 		err = love.graphics.newImage("stockData/tiles/errorBlock.png"),
@@ -30,7 +35,25 @@ function UI.load()
 	UI.resize(gw(),gh())
 end
 
-function UI.update(dt) UI.hotbar.clock = UI.hotbar.clock + dt end
+local last = Vec(0,0)
+local placedLast = false
+function UI.update(dt)
+	local ox = math.floor((love.mouse.getX()+state.viewPort.x)/tileW) -- world x
+	local oy = math.floor((love.mouse.getY()+state.viewPort.y)/tileH) -- world y
+
+	if controls.isDown('place') and not Vec(love.mouse.getX(),love.mouse.getY()):isWithinRec(UI.bounds) and not game.system.isUIEnabled("pixelEditor") and not game.system.isUIEnabled("inventory") then
+		if last then
+			UI.placeLine(last.x,last.y,ox,oy)
+			placedLast=true
+		else
+			UI.placeBlock(ox,oy)
+			placedLast=true
+		end
+	else
+		placedLast = false
+	end
+	last = Vec(ox,oy)
+end
 
 function UI.draw()
 	local scale = ui.spriteScale
@@ -118,11 +141,22 @@ function UI.mousepressed(x,y,b)
 			else
 				game.system.enableUI("pixelEditor")
 			end
-		elseif b=="l" and pos:isWithinRec(Rec(UI.bounds.x+(UI.bounds.w/2-top_buttons_width/2),UI.bounds.y-UI.img.inventory:getHeight()*scale,UI.img.inventory:getWidth()*scale,UI.img.inventory:getHeight()*scale):del()) then
+		elseif b=="l" and pos:isWithinRec(Rec(UI.bounds.x+(UI.bounds.w/2-top_buttons_width/2)+(UI.img.craft:getWidth()+UI.img.up:getWidth())*scale,UI.bounds.y-UI.img.inventory:getHeight()*scale,UI.img.inventory:getWidth()*scale,UI.img.inventory:getHeight()*scale):del()) then
 			if game.system.isUIEnabled("inventory") then
 				game.system.disableUI("inventory")
 			else
 				game.system.enableUI("inventory")
+			end
+		else
+			local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
+			local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
+			if controls.isIn("place",b) and not game.system.isUIEnabled("pixelEditor") and not game.system.isUIEnabled("inventory") then
+				print(ox,oy)
+				UI.placeBlock(ox,oy)
+			elseif controls.isIn("scrlUp",b) and not game.system.isUIEnabled("pixelEditor") and not game.system.isUIEnabled("inventory") then
+				UI.hotbar.selIndex=math.wrap(UI.hotbar.selIndex-1,1,10)
+			elseif controls.isIn("scrlDn",b) and not game.system.isUIEnabled("pixelEditor") and not game.system.isUIEnabled("inventory") then
+				UI.hotbar.selIndex=math.wrap(UI.hotbar.selIndex+1,1,10)
 			end
 		end
 	else
@@ -135,6 +169,26 @@ end
 function UI.resize(w,h)
 	UI.bounds = Rect(gw()-gw()*ui.hotBarWidth,(gh()-gh()*ui.hotBarHeight)/2,gw()*ui.hotBarWidth,gh()*ui.hotBarHeight)
 	UI.bigFont = love.graphics.newFont(UI.bounds.w/UI.baseFont:getHeight())
+end
+
+-- ==========================================
+
+function UI.placeBlock(x,y)
+	local i = UI.hotbar.selIndex
+	if x and y then
+		if controls.isDown("destMod") then
+			game.placeBlock(world,nil,x,y)
+		elseif UI.hotbar[i] and not game.getTile(world,x,y) then
+			game.placeBlock(world,UI.hotbar[i],x,y)
+		elseif not UI.hotbar[i] then
+			game.placeBlock(world,nil,x,y)
+		end
+	end
+end
+function UI.placeLine(x0,y0,x1,y1)
+	for i,x,y in bresenham(x0,y0,x1,y1) do
+		UI.placeBlock(x,y)
+	end
 end
 
 return UI

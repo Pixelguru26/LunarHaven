@@ -128,6 +128,9 @@
 		-- x1, y1, x2, y2, error, error divisor, current x, current y, lastType
 		-- return bresenham_iter,{math.floor(x1),math.floor(y1),math.floor(x2),math.floor(y2),0,math.abs(x2-x1),math.floor(x1),math.floor(y1),"h"},x1,y1
 		local y,err,errDiv,plot = y1,0,math.abs(x2-x1),{}
+		if math.floor(x1) == math.floor(x2) and math.floor(y1) == math.floor(y2) then
+			return icoords({math.floor(x1),math.floor(y1)})
+		end
 		if errDiv ~= 0 then
 			for x=math.floor(x1),math.floor(x2),math.Sign(x2-x1) do
 				while err > errDiv do
@@ -152,16 +155,21 @@
 	end
 
 	-- simple (and bad) table "serializer" for simple debugging
-	function quickRead(iput,indent)
+	function quickRead(iput,indent,depth)
+		depth = (depth or 5)-1
 		indent = indent or ""
 		local result={}
 		for k,v in pairs(iput) do
 			if type(v)=="table" then
-				table.insert(result,indent.."{"..k..": \n")
-				table.insert(result,quickRead(iput,indent.."\t"))
-				table.insert(result,indent.."}\n")
+				if depth > 0 then
+					table.insert(result,indent..k..": {\n")
+					table.insert(result,quickRead(iput,indent.."\t",depth))
+					table.insert(result,indent.."}\n")
+				else
+					table.insert(result,indent..k..": "..tostring(v).."\n")
+				end
 			else
-				table.insert(result,indent.."["..k..": "..v.."]\n")
+				table.insert(result,indent.."["..k..": "..tostring(v).."]\n")
 			end
 		end
 		return table.concat(result)

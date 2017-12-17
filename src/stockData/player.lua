@@ -3,7 +3,7 @@ local game = require("libs/game")
 local fizzix = game.fizzix
 local controls = game.control
 
-local plr = {}
+local plr = {layer = 2}
 
 
 
@@ -13,7 +13,6 @@ function plr.load(self)
 	controls.new("mvLeft","left","a")
 	controls.new("mvRight","right","d")
 	controls.new("jump","space","up","w")
-	plr.layer = 2
 	plr.bounds = Rec(0,0,.95,1)
 	plr.vel = Vec(0.2,-0.1)
 	plr.onGround = false
