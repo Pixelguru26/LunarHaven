@@ -24,6 +24,7 @@ function plr.load(self)
 		airDamper = 100, -- scaling down of acceleration while in air
 		jump = 4, -- jumping impulse velocity
 		speed = 8, -- max walking velocity
+		mass = 1
 	}
 end
 

@@ -164,7 +164,7 @@ end
 
 function lib.gravity(self,world,dt)
 	-- apply gravity
-	self.vel.y = self.vel.y + world.fizzix.grav*dt
+	self.vel.y = self.vel.y + world.fizzix.grav*dt*(self.stats and self.stats.mass or 1)
 end
 
 function lib.air(self,world,dt)
