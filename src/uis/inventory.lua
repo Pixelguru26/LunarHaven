@@ -4,6 +4,8 @@ local controls = game.control
 local framedRect = require("libs/frameRect")
 
 function UI.load()
+	UI.bmScroll = 0
+	UI.mScroll = 0
 	UI.clock = 0
 	love.graphics.setDefaultFilter("nearest","nearest")
 	UI.img = {
