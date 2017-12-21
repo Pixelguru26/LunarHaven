@@ -42,14 +42,19 @@ function UI.load()
 	}
 	UI.boxes = {}
 	UI.resize(love.graphics.getWidth(),love.graphics.getHeight())
-	UI.frames[1] = {palette={},imgData={},img=love.graphics.newCanvas(64,64)}
-	for x=0,64 do
-		UI.frames[1].imgData[x]={}
-		for y=0,64 do
-			UI.frames[1].imgData[x][y]=0
-		end
-	end
+	-- UI.frames[1] = {palette={},imgData={},img=love.graphics.newCanvas(64,64)}
+	-- for x=0,64 do
+	-- 	UI.frames[1].imgData[x]={}
+	-- 	for y=0,64 do
+	-- 		UI.frames[1].imgData[x][y]=0
+	-- 	end
+	-- end
+	UI.frames[1] = {img=love.graphics.newCanvas(16,16)}
 	UI.frames[1].img:clear(255,255,255,255)
+end
+
+function UI.reload()
+	UI.resize(love.graphics.getWidth(),lvoe.graphics.getHeight())
 end
 
 function UI.update(dt) UI.clock = UI.clock + dt end
@@ -336,20 +341,9 @@ end
 		love.graphics.setPointStyle("rough")
 		love.graphics.setCanvas(UI.frames[UI.frames.current].img)
 		love.graphics.setColor(r,g,b,a)
-
-		-- local pos = Vec(x,y+1)
-		-- local dist = Vec(dx/UI.frames.zoom,dy/UI.frames.zoom)
-
-		-- for i=0,dist.l*4 do
-		-- 	love.graphics.point(pos.x+math.cos(dist.a)*i/4,pos.y+math.sin(dist.a)*i/4)
-		-- end
-		--love.graphics.setScissor(math.sMin(x,x-dx),math.sMin(y,y-dy)+1,math.abs(dx),math.abs(dy))
-		--love.graphics.rectangle("line",math.sMin(x,x-dx),math.sMin(y,y-dy)+1,math.abs(dx),math.abs(dy))
 		for i,ix,iy in bresenham(x,y+1,x-dx,y+1-dy) do
 			love.graphics.point(ix,iy)
 		end
-		-- love.graphics.circle("line",x,y+1,4)
-		-- love.graphics.circle("line",x+dx/UI.frames.zoom,y+1+dy/UI.frames.zoom,4)
 
 		love.graphics.setScissor(scissx,scissy,scissw,scissh)
 		love.graphics.setBlendMode(bm1,bm2)
@@ -358,5 +352,45 @@ end
 		-- pos:del()
 		-- dist:del()
 	end
+
+	local l,r,u,d = string.byte("l"),string.byte("r"),string.byte("u"),string.byte("d")
+	local function getCellData(cell)
+		return cell:byte(1)==l,cell:byte(2)==r,cell:byte(3)==u,cell:byte(4)==d,cell:match("(%d+).(%d+)")
+	end
+	function UI.floodFill(x,y,r,g,b,a,br,bg,bb,ba)
+		local bm1,bm2 = love.graphics.getBlendMode()
+		local scissx,scissy,scissw,scissh = love.graphics.getScissor()
+		local canv = UI.frames[UI.frames.current].img
+		love.graphics.setBlendMode("replace","alpha")
+		love.graphics.setPointSize(1)
+		love.graphics.setPointStyle("rough")
+		love.graphics.setCanvas(canv)
+
+		-- ex. cell: "lrud17,5"
+		local l,r,u,d,xp,yp
+		local lastCount = 0
+		local deadCells = {}
+		local liveCells = {}
+		local nextCells = {}
+		repeat
+			for i,v in ipairs(liveCells) do
+				l,r,u,d,xp,yp = getCellData(v)
+				local cr,cg,cb,ca = canv:getPixel(xp,yp)
+				table.insert(deadCells,xp)
+				table.insert(deadCells,yp)
+			end
+			lastCount = #liveCells
+			for i=1,#liveCells do
+				table.remove(liveCells,#liveCells)
+			end
+		until #liveCells<=0
+
+
+		love.graphics.setScissor(scissx,scissy,scissw,scissh)
+		love.graphics.setBlendMode(bm1,bm2)
+		love.graphics.setColor(255,255,255,255)
+		love.graphics.setCanvas()
+	end
+	--print(getCellData("lrud17,5"))
 
 return UI

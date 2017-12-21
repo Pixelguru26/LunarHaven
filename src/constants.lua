@@ -33,7 +33,8 @@ _CONSTANTS = {
 		editorFramesNameRatio = 4/5, -- ratio of frame selector width to UI bottom width
 		editorFrameSizeRatio = 1/10, -- w = this*frameboxwidth
 		editorShadeDiff = 51,
-		invSideRatio = 1/6 -- this*windowwidth
+		invSideRatio = 1/6, -- this*windowwidth
+		invItemPadding = 4, -- raw
 	},
 	modsDir = love.filesystem.getSourceBaseDirectory().."/mods"
 }

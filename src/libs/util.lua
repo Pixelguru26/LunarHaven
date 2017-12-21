@@ -127,6 +127,10 @@
 	function bresenham(x1,y1,x2,y2)
 		-- x1, y1, x2, y2, error, error divisor, current x, current y, lastType
 		-- return bresenham_iter,{math.floor(x1),math.floor(y1),math.floor(x2),math.floor(y2),0,math.abs(x2-x1),math.floor(x1),math.floor(y1),"h"},x1,y1
+		local ix1 = math.floor(x1)
+		local ix2 = math.floor(x2)
+		local iy1 = math.ceil(y1)
+		local iy2 = math.ceil(y2)
 		local y,err,errDiv,plot = y1,0,math.abs(x2-x1),{}
 		if math.floor(x1) == math.floor(x2) and math.floor(y1) == math.floor(y2) then
 			return icoords({math.floor(x1),math.floor(y1)})
@@ -137,18 +141,24 @@
 					--print(x,y,"v")
 					err = err - errDiv
 					y = y + math.Sign(y2-y1)
+					if (x>=ix1 and x<=ix2) or (x<=ix1 and x>=ix2) and (y>=iy1 and y<=iy2) and (y<=iy1 and y>=iy2) then
+						table.insert(plot,x)
+						table.insert(plot,y)
+					end
+				end
+				--print(x,y,"h")
+				if (x>=ix1 and x<=ix2) or (x<=ix1 and x>=ix2) and (y>=iy1 and y<=iy2) and (y<=iy1 and y>=iy2) then
 					table.insert(plot,x)
 					table.insert(plot,y)
 				end
-				--print(x,y,"h")
-				table.insert(plot,x)
-				table.insert(plot,y)
 				err = err + math.abs(y2-y1)
 			end
 		else
 			for y=y1,y2,math.Sign(y2-y1) do
-				table.insert(plot,x1)
-				table.insert(plot,y)
+				if (y>=iy1 and y<=iy2) and (y<=iy1 and y>=iy2) then
+					table.insert(plot,x1)
+					table.insert(plot,y)
+				end
 			end
 		end
 		return icoords(plot)

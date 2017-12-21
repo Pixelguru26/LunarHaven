@@ -74,6 +74,9 @@ local function tableToDirTree(t,dir)
 					love.filesystem.write(dir.."/"..k..".json",json.encode(v.data))
 				elseif v.fileType=="txt" then
 					love.filesystem.write(dir.."/"..k..".lua",v.data)
+				elseif v.fileType=="copy" then
+					local data = love.filesystem.read(v.data)
+					love.filesystem.write(dir.."/"..k,data)
 				else
 					love.filesystem.write(dir.."/"..k,v.data)
 				end
@@ -93,6 +96,20 @@ local saveDirStructure = {
 					data = {
 						sorting = "index", -- possible: index, name, type, grid, floating
 						positions = {[1]={0,0}}
+					}
+				},
+				["6549e01e-e538-11e7-80c1-9a214cf093ae"] = {
+					frames = {
+						["1.png"] = {isFile = true, fileType = "copy", data = "stockData/tiles/defaultBlock.png"}
+					},
+					assets = {},
+					settings = {
+						isFile = true,
+						fileType = "json",
+						data = {
+							name = "testBlock",
+							type = "Tile"
+						}
 					}
 				}
 			},

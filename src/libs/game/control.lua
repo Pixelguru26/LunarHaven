@@ -32,11 +32,11 @@ end
 function lib.modifiersDown(k)
 	if lib.hasModifiers(k) then
 		for k,v in pairs(_CONTROLS[k]._modifiers) do
-			if not love.keyboard.isDown(k) then
-				return false
+			if love.keyboard.isDown(k) then
+				return true
 			end
-			return true
 		end
+		return false
 	else
 		return true
 	end

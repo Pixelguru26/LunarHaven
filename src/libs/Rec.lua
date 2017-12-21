@@ -27,6 +27,14 @@ _RECTANGLE.HEIGHT=4
 
 _RECTANGLE.meta={}
 _RECTANGLE.data={}
+
+-- util
+	local function min(a,b)
+		return a<b and a or b
+	end
+	local function max(a,b)
+		return a>b and a or b
+	end
 -- horiz
 	function _RECTANGLE.l(v,iv)
 		if iv then
@@ -138,6 +146,18 @@ _RECTANGLE.data={}
 	end
 	function _RECTANGLE.fullIntersect(v,iv)
 		return v:intersect(iv),v:relate(iv)
+	end
+	function _RECTANGLE.intersection(v,iv)
+		local x = max(v.x,iv.x)
+		local y = max(v.y,iv.y)
+		local w = v.r < iv.r and v.r-x or iv.r-x
+		local h = v.b < iv.b and v.b-y or iv.b-y
+		return _RECTANGLE(
+				x,
+				y,
+				w,
+				h
+			)
 	end
 	function _RECTANGLE.relate(v,iv)
 		-- ALL DISTANCES POSITIVE
