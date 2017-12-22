@@ -152,12 +152,7 @@ _RECTANGLE.data={}
 		local y = max(v.y,iv.y)
 		local w = v.r < iv.r and v.r-x or iv.r-x
 		local h = v.b < iv.b and v.b-y or iv.b-y
-		return _RECTANGLE(
-				x,
-				y,
-				w,
-				h
-			)
+		return _RECTANGLE(x,y,w,h)
 	end
 	function _RECTANGLE.relate(v,iv)
 		-- ALL DISTANCES POSITIVE

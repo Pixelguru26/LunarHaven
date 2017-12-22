@@ -24,10 +24,15 @@ function lib.disableAllUIs()
 end
 
 function lib.isUIEnabled(name)
-	for k,v in pairs(enabledUIs) do
-		if k==name then return true end
+	if enabledUIs[name] then
+		return true
+	else
+		return false
 	end
-	return false
+end
+
+function lib.getUI(name)
+	return enabledUIs[name]
 end
 
 function lib.saveGFXState()
@@ -86,6 +91,7 @@ local function tableToDirTree(t,dir)
 		end
 	end
 end
+
 local saveDirStructure = {
 	Player = {
 		Inventory = {
@@ -98,9 +104,9 @@ local saveDirStructure = {
 						positions = {[1]={0,0}}
 					}
 				},
-				["6549e01e-e538-11e7-80c1-9a214cf093ae"] = {
+				["ffd7d9dd-ead6-471f-afdb-5a6de7b9de59"] = {
 					frames = {
-						["1.png"] = {isFile = true, fileType = "copy", data = "stockData/tiles/defaultBlock.png"}
+						["tile.png"] = {isFile = true, fileType = "copy", data = "stockData/tiles/defaultBlock.png"}
 					},
 					assets = {},
 					settings = {
@@ -108,7 +114,73 @@ local saveDirStructure = {
 						fileType = "json",
 						data = {
 							name = "testBlock",
-							type = "Tile"
+							type = "Tile",
+							layer = 4,
+							solid = true
+						}
+					}
+				},
+				["b9882349-379e-4b07-8464-c0c8dc027273"] = {
+					frames = {
+						["tile.png"] = {isFile = true, fileType = "copy", data = "stockData/tiles/defaultBlock.png"}
+					},
+					assets = {},
+					settings = {
+						isFile = true,
+						fileType = "json",
+						data = {
+							name = "Default",
+							type = "Tile",
+							layer = 4,
+							solid = true
+						}
+					}
+				},
+				["c1f0aca7-86aa-4992-8de3-d6f93f6fe2e5"] = {
+					frames = {
+						["tile.png"] = {isFile = true, fileType = "copy", data = "stockData/tiles/defaultBGBlock.png"}
+					},
+					assets = {},
+					settings = {
+						isFile = true,
+						fileType = "json",
+						data = {
+							name = "Default BG",
+							type = "Tile",
+							layer = 0,
+							solid = false
+						}
+					}
+				},
+				["e804c749-bd74-4d64-877c-3fd2537c0117"] = {
+					frames = {
+						["tile.png"] = {isFile = true, fileType = "copy", data = "stockData/tiles/pillarBlock.png"}
+					},
+					assets = {},
+					settings = {
+						isFile = true,
+						fileType = "json",
+						data = {
+							name = "FG Test",
+							type = "Tile",
+							layer = 4,
+							solid = false
+						}
+					}
+				},
+				["925201d2-23f4-444c-be7b-40d3c3d09296"] = {
+					frames = {
+						["tile.png"] = {isFile = true, fileType = "copy", data = "stockData/tiles/roofBlock.png"}
+					},
+					assets = {},
+					settings = {
+						isFile = true,
+						fileType = "json",
+						data = {
+							name = "Default Horiz",
+							type = "Tile",
+							layer = 4,
+							solid = false
 						}
 					}
 				}
@@ -161,6 +233,7 @@ local saveDirStructure = {
 		}
 	}
 }
+
 function lib.createSaveDir()
 	tableToDirTree(saveDirStructure,"")
 end

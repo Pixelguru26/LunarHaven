@@ -43,13 +43,18 @@ function UI.load()
 	controls.new("iscrlUp",'wu')
 	controls.new("iscrlDn",'wd')
 	controls.new("zoom",'lctrl','rctrl')
+	controls.new("select",'l')
 	UI.resize(love.graphics.getWidth(),love.graphics.getHeight())
 	UI.updateFileSet(UI.path)
+	UI.bmScroll = 0
+	UI.mScroll = 0
 end
 
 function UI.reload()
 	UI.resize(love.graphics.getWidth(),love.graphics.getHeight())
 	UI.updateFileSet(UI.path)
+	UI.bmScroll = 0
+	UI.mScroll = 0
 end
 
 function UI.update(dt) UI.clock = UI.clock + dt end
@@ -72,25 +77,34 @@ function UI.draw()
 	iSpace.w = iSpace.w*UI.zoom
 	iSpace.h = iSpace.h*UI.zoom
 	iSpace.y = iSpace.y-UI.mScroll%1*iSpace.h
-	love.graphics.setScissor(bounds.x,bounds.y,bounds.w,bounds.h)
-	local i = math.floor(UI.mScroll)*math.floor(bounds.w/iSpace.w)
+	love.graphics.setScissor(bounds.x,bounds.y,bounds.w+iSpace.w,bounds.h)
+	local vi = iSpace:regress(bounds,Vec(love.mouse.getX(),love.mouse.getY()):del()) + (math.floor(UI.mScroll)-1)*math.floor(bounds.w/iSpace.w)
+	bounds.w = bounds.w -(tileW+ui.invItemPadding*2)*UI.zoom
+	local i = math.floor(UI.mScroll)*math.ceil(bounds.w/iSpace.w)
 	for space in bounds:iter(iSpace) do
-		if space.x<bounds.r-space.w then
-			i = i + 1
-			love.graphics.rectangle("line",space.x,space.y,space.w,space.h)
-			love.graphics.print(i,iSpace.x,iSpace.y)
-			if UI.items[i] then
-				--love.graphics.rectangle("fill",iSpace.x,iSpace.y,iSpace.w,iSpace.h)
-				UI.displayItem(UI.items[i],UI.items[i].__PaTH,iSpace)
-			end
+		i = i + 1
+		love.graphics.rectangle("line",space.x,space.y,space.w,space.h)
+		love.graphics.print(i,iSpace.x,iSpace.y)
+		if i==vi and Vec(love.mouse.getX(),love.mouse.getY()):isWithinRec(bounds) then
+			love.graphics.setColor(255,255,255,255/2)
+			love.graphics.rectangle("fill",iSpace.x,iSpace.y,iSpace.w,iSpace.h)
+			love.graphics.setColor(255,255,255,255)
+		end
+		if UI.items[i] then
+			UI.displayItem(UI.items[i],UI.items[i].path,iSpace,true)
 		end
 	end
-
 	love.graphics.setScissor()
 
 	bounds:del()
-	iSpace:del()
 	love.graphics.draw(UI.UICanv,0,0)
+	if UI.cursorItem then
+		iSpace.mx = love.mouse.getX()
+		iSpace.my = love.mouse.getY()
+		UI.displayItem(UI.cursorItem,UI.cursorItem.path,iSpace)
+	end
+	love.graphics.setScissor()
+	iSpace:del()
 end
 
 function UI.mousemoved(x,y,dx,dy)
@@ -157,25 +171,56 @@ function UI.mousepressed(x,y,b)
 				UI.mScroll = UI.mScroll - .4
 			end
 		end
+		if controls.isIn("select",b) then
+			local bounds = Rect(dims.x+dims.w*ui.invSideRatio,dims.y,dims.w-dims.w*ui.invSideRatio,dims.h)
+			local iSpace = Rect(bounds.x,bounds.y,tileW+ui.invItemPadding*2,tileH+ui.invItemPadding*2+love.graphics.getFont():getHeight()*2)
+			iSpace.w = iSpace.w*UI.zoom
+			iSpace.h = iSpace.h*UI.zoom
+			iSpace.y = iSpace.y-UI.mScroll%1*iSpace.h
+			local i = iSpace:regress(bounds,Vec(x,y):del()) + (math.floor(UI.mScroll)-1)*math.floor(bounds.w/iSpace.w)
+			if UI.items[i] then
+				--print("GOTCHA ONE")
+				UI.cursorItem = UI.items[i]
+			else
+				--print(i)
+			end
+
+			iSpace:del()
+			bounds:del()
+		end
 	end
 
 	dims:del()
 	pos:del()
 end
 
+function UI.mousereleased(x,y,b)
+	if UI.cursorItem and game.system.getUI("hotbar") then
+		local hb = game.system.getUI("hotbar")
+		local area = hb.bounds
+		local item = Rec(hb.bounds.x,hb.bounds.y+ui.hotBarPadding*ui.hotBarWidth*love.graphics.getWidth() - hb.hotbar.scroll*(hb.bounds.w+ui.hotBarPadding*ui.hotBarWidth*love.graphics.getWidth()),hb.bounds.w,hb.bounds.w-ui.hotBarPadding*ui.hotBarWidth*love.graphics.getWidth())
+		local index = item:regress(area,Vec(x,y):del())-1
+		hb.hotbar[index] = UI.cursorItem
+		item:del()
+	end
+	UI.cursorItem = nil
+end
+
 -- ==========================================
 
-function UI.displayItem(item,path,rect)
+function UI.displayItem(item,path,rect,intersectScissor)
 	local sciss = Rect(love.graphics.getScissor())
-	local intersection = rect:intersection(sciss)
-	love.graphics.setScissor(intersection.x,intersection.y,intersection.w,intersection.h)
+	local intersection
+	if intersectScissor then
+		intersection = rect:copy()--rect:intersection(sciss)
+		love.graphics.setScissor(intersection.x,intersection.y,intersection.w,intersection.h)
+	else
+		love.graphics.setScissor(rect.x,rect.y,rect.w,rect.h)
+	end
 
-	local text = item.name
-	local itype = item.type
-	local iconName = love.filesystem.isFile(path.."/frames/icon.png") and "icon.png" or
-		love.filesystem.isFile(path.."/frames/tile.png") and "tile.png" or
-		love.filesystem.isFile(path.."/frames/1.png") and "1.png"
-	local icon = love.graphics.newImage(path.."/frames/"..iconName)
+	local text = item.properties.name
+	local itype = item.properties.type
+	local icon = item.frames.icon or item.frames.tile or item.frames[1]
 	local yprog = rect.y+ui.invItemPadding
 	local imgh = (rect.h-ui.invItemPadding*2-love.graphics.getFont():getHeight()*2*UI.zoom) -- temporarily stored because we use it in the print too
 	local fontScale = 1--(rect.h-ui.invItemPadding*2-imgh)/2/love.graphics.getFont():getHeight()
@@ -183,15 +228,17 @@ function UI.displayItem(item,path,rect)
 	love.graphics.draw(icon,rect.x+ui.invItemPadding,yprog,0,(rect.w-ui.invItemPadding*2)/icon:getWidth(),imgh/icon:getHeight());yprog = yprog + imgh
 	
 	--love.graphics.scale(fontScale,fontScale)
-	love.graphics.print(text,(rect.x+ui.invItemPadding)/fontScale,yprog/fontScale);yprog = yprog + love.graphics.getFont():getHeight()
+	love.graphics.print(tostring(text),(rect.x+ui.invItemPadding)/fontScale,yprog/fontScale);yprog = yprog + love.graphics.getFont():getHeight()
 	love.graphics.setColor(255,255,255,255/2)
-	love.graphics.print(itype,(rect.x+ui.invItemPadding)/fontScale,yprog/fontScale)
+	love.graphics.print(tostring(itype),(rect.x+ui.invItemPadding)/fontScale,yprog/fontScale)
 	--love.graphics.scale(1/fontScale,1/fontScale)
 
 	love.graphics.setScissor(sciss.x,sciss.y,sciss.w,sciss.h)
-	sciss:del(); intersection:del()
+	--sciss:del();
+	if intersection then 
+		intersection:del()
+	end
 	love.graphics.setColor(255,255,255,255)
-	return icon
 end
 
 function UI.updateFileSet(path)
@@ -199,19 +246,28 @@ function UI.updateFileSet(path)
 	UI.itemTypes = {}
 	UI.items = {}
 	local typequeue = {}
-	local item,data
+	local itemPath,data
+	love.graphics.setDefaultFilter("nearest","nearest")
 	for i,v in ipairs(love.filesystem.getDirectoryItems('/'..path)) do
-		item = path..'/'..v
-		if love.filesystem.isFile(item.."/settings.json") then
-			data = love.filesystem.read(item.."/settings.json")
+		itemPath = path..'/'..v
+		if love.filesystem.isFile(itemPath.."/settings.json") then
+			local item = {}
+			data = love.filesystem.read(itemPath.."/settings.json")
 			data = json.decode(data)
+			item.properties = data
+			item.frames = {}
+			for ii,iv in ipairs(love.filesystem.getDirectoryItems('/'..itemPath.."/frames")) do
+				local fileName = string.match(iv,"(%w+)%.")
+				fileName = tonumber(fileName) or fileName
+				item.frames[fileName] = love.graphics.newImage(itemPath.."/frames/"..iv)
+			end
+
 			-- TODO @ALPHA : actual sorting and shit
-			UI.items[data.name] = data
-			UI.items[data.name].__PaTH = item
+			UI.items[data.name] = item
+			UI.items[data.name].path = itemPath
 			table.insert(UI.items,UI.items[data.name])
-			print("found "..item)
-		elseif love.filesystem.isDirectory(item) then
-			UI.folder[item]=true
+		elseif love.filesystem.isDirectory(itemPath) then
+			UI.folder[itemPath]=true
 		end
 	end
 end
