@@ -14,12 +14,14 @@ local UI = {
 		current=1
 	},
 	clickMode = 0, -- used for eating the click
-	colorPickerActive = true
+	colorPickerActive = true,
+	--name = "",
 }
 local game = require("libs/game")
 local controls = game.control
 local framedRect = require("libs/frameRect")
 local trx = require("libs/Trx")
+local uuid = require("libs/uuid")
 
 function UI.load()
 	-- a couple of constants to make calculations shorter
@@ -65,6 +67,7 @@ function UI.load()
 		bgCol = love.graphics.newImage("stockData/UI/UI2_backg_color.png"),
 		palette = love.graphics.newImage("stockData/UI/UI2_palette_selection.png"),
 	}
+	UI.name = ""
 	UI.boxes = {}
 	UI.resize(love.graphics.getWidth(),love.graphics.getHeight())
 	-- UI.frames[1] = {palette={},imgData={},img=love.graphics.newCanvas(64,64)}
@@ -74,7 +77,7 @@ function UI.load()
 	-- 		UI.frames[1].imgData[x][y]=0
 	-- 	end
 	-- end
-	UI.frames[1] = {img=love.graphics.newCanvas(16,16)}
+	UI.frames[1] = {name="tile",img=love.graphics.newCanvas(16,16)}
 	UI.frames[1].img:clear(255,255,255,255)
 
 	UI.frames.offset.x = dims.w/2
@@ -86,6 +89,7 @@ end
 
 function UI.reload()
 	UI.resize(love.graphics.getWidth(),love.graphics.getHeight())
+	UI.name = ""
 end
 
 function UI.update(dt) UI.clock = UI.clock + dt end
@@ -166,6 +170,7 @@ function UI.draw()
 
 	love.graphics.setColor(10,10,10,255)
 	UI.nameBoxTrx:draw()
+	--love.graphics.rectangle("fill",UI.nameBoxTrx.bounds.x,UI.nameBoxTrx.bounds.y,UI.nameBoxTrx.bounds.w,UI.nameBoxTrx.bounds.h)
 
 	-- ==========================================
 	if UI.colorPickerActive then
@@ -239,7 +244,8 @@ function UI.resize(w,h)
 	-- name box
 	progR = dims.x+(ui.editorFramesNameRatio*dims.w-UI.img.etr:getWidth()*scale)
 	progL = dims.r-(UI.img.etr:getWidth()-2)*scale
-	UI.nameBoxTrx = trx("",
+	if UI.nameBoxTrx then UI.name = UI.nameBoxTrx.txt[1] end
+	UI.nameBoxTrx = trx(UI.name,
 		progR+scale*4,
 		dims.b-UI.img.nM:getHeight()-scale*2,
 		progL-progR-UI.img.nL:getWidth()*scale-UI.img.nR:getWidth()*scale,
@@ -257,8 +263,9 @@ function UI.resize(w,h)
 	love.graphics.draw(UI.img.fL,dims.x,dims.b,0,scale,scale,0,UI.img.fL:getHeight()-1); progR = progR + UI.img.fL:getWidth()*scale
 	love.graphics.draw(UI.img.fR,progL,dims.b,0,scale,scale,UI.img.fR:getWidth(),UI.img.fR:getHeight()-1); progL = progL - UI.img.fR:getWidth()*scale
 	love.graphics.draw(UI.img.fM,progR,dims.b,0,(progL-progR)/UI.img.fM:getWidth(),scale,0,UI.img.fM:getHeight()-1)
-
-	love.graphics.draw(UI.img.etr,dims.r,dims.b,0,scale,scale,UI.img.etr:getWidth()-1,UI.img.etr:getHeight()-1) -- enter button
+	
+	-- enter button
+	love.graphics.draw(UI.img.etr,dims.r,dims.b,0,scale,scale,UI.img.etr:getWidth()-1,UI.img.etr:getHeight()-1)
 
 	dims:del()
 	love.graphics.setCanvas()
@@ -352,7 +359,6 @@ function UI.mousepressed(x,y,b)
 			UI.getCColor()
 			-- print(UI.colors.current)
 			-- print(unpack(UI.getCColor()))
-
 			box:del();shade:del();main:del();light:del()
 		elseif b=="l" and pos:isWithinRec(Rec(dims.x-(UI.img.xbut:getWidth()-6)*scale,dims.y-(UI.img.xbut:getHeight()-6)*scale,9*scale,9*scale):del()) then
 			game.system.disableUI("pixelEditor")
@@ -363,7 +369,7 @@ function UI.mousepressed(x,y,b)
 		UI.clickMode = 2
 		UI.nameBoxTrx:mousepressed(x,y,b)
 	elseif UI.colorPickerActive then
-		if pos:isWithinRec(dims) then
+		if pos:isWithinRec(dims) and pos.y<dims.b-UI.img.nM:getHeight()*scale then
 			UI.clickMode = 1
 			local palettePos = Vec(
 				math.floor((x-dims.x)*UI.img.palette:getWidth()/dims.w),
@@ -380,6 +386,14 @@ function UI.mousepressed(x,y,b)
 	else
 		UI.clickMode = 0
 	end
+
+	-- confirmation
+	local button = Rect(dims.r-UI.img.etr:getWidth()*scale,dims.b-UI.img.etr:getHeight()*scale,UI.img.etr:getWidth()*scale,UI.img.etr:getWidth()*scale)
+	if pos:isWithinRec(button) then
+		UI.save()
+		game.system.disableUI("pixelEditor")
+	end
+	button:del()
 
 	dims:del()
 	pos:del()
@@ -512,5 +526,24 @@ end
 		love.graphics.setCanvas()
 	end
 	--print(getCellData("lrud17,5"))
+
+	function UI.save()
+		print("saving!")
+		local path = "Player/Inventory/unsorted/"..uuid()
+		love.filesystem.createDirectory(path)
+		path = path.."/"
+
+		local name = #UI.nameBoxTrx.txt[1]>0 and UI.nameBoxTrx.txt[1] or "Block"
+		local settings = {type="Tile",solid=true,name=name,layer=4}
+		love.filesystem.write(path.."settings.json",json.encode(settings))
+
+		love.filesystem.createDirectory(path.."frames")
+		love.filesystem.createDirectory(path.."assets")
+		path = path.."frames/"
+
+		for i,v in ipairs(UI.frames) do
+			v.img:getImageData():encode(path..v.name..".png")
+		end
+	end
 
 return UI
