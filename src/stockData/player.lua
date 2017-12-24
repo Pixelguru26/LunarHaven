@@ -55,8 +55,8 @@ function plr.update(self,dt,world,state)
 	fizzix.update(self,world,dt)
 
 	-- apply viewPort pos
-	state.viewPort.x = math.Lerp(dt*10,state.viewPort.x,(self.bounds.x+self.bounds.w/2)*tileW-love.graphics.getWidth()/2)
-	state.viewPort.y = math.Lerp(dt*10,state.viewPort.y,(self.bounds.y+self.bounds.h/2)*tileH-love.graphics.getHeight()/2)
+	state.viewPort.x = math.Lerp(dt*camSpeed,state.viewPort.x,(self.bounds.x+self.bounds.w/2)*tileW-love.graphics.getWidth()/2)
+	state.viewPort.y = math.Lerp(dt*camSpeed,state.viewPort.y,(self.bounds.y+self.bounds.h/2)*tileH-love.graphics.getHeight()/2)
 end
 
 function plr.keypressed(self,key)

@@ -1,10 +1,34 @@
-local UI = {colors={scroll=0,current=1,shade=0,[0]={0,0,0,0},[1]={0,0,0,255},[2]={255,255,255,255}},frames={scroll=0,zoom=1,offset=Vec(0,0),current=1}}
+local UI = {
+	colors={
+		scroll=0,
+		current=1,
+		shade=0,
+		[0]={0,0,0,0},
+		[1]={0,0,0,255},
+		[2]={255,255,255,255}
+	},
+	frames={
+		scroll=0,
+		zoom=1,
+		offset=Vec(0,0),
+		current=1
+	},
+	clickMode = 0, -- used for eating the click
+	colorPickerActive = true
+}
 local game = require("libs/game")
 local controls = game.control
 local framedRect = require("libs/frameRect")
 local trx = require("libs/Trx")
 
 function UI.load()
+	-- a couple of constants to make calculations shorter
+	local scale = ui.spriteScale
+	local dims = Rect(ui.editorPaddingLeft*scale,ui.editorPaddingTop*scale,0,0)
+	dims.w = love.graphics.getWidth() - ui.editorPaddingRight*scale - ui.hotBarWidth*love.graphics.getWidth() - dims.x
+	dims.h = love.graphics.getHeight() - ui.editorPaddingBottom*scale - dims.y
+
+	-- basic clock, then loading images
 	UI.clock = 0
 	love.graphics.setDefaultFilter("nearest","nearest")
 	UI.img = {
@@ -39,6 +63,7 @@ function UI.load()
 		cbx = love.graphics.newImage("stockData/UI/UI2_colorBox.png"),
 
 		bgCol = love.graphics.newImage("stockData/UI/UI2_backg_color.png"),
+		palette = love.graphics.newImage("stockData/UI/UI2_palette_selection.png"),
 	}
 	UI.boxes = {}
 	UI.resize(love.graphics.getWidth(),love.graphics.getHeight())
@@ -51,10 +76,16 @@ function UI.load()
 	-- end
 	UI.frames[1] = {img=love.graphics.newCanvas(16,16)}
 	UI.frames[1].img:clear(255,255,255,255)
+
+	UI.frames.offset.x = dims.w/2
+	UI.frames.offset.y = dims.h/2
+
+	controls.new("pickerMod","lctrl","rctrl")
+	controls.new("fldfilMod","lalt","ralt")
 end
 
 function UI.reload()
-	UI.resize(love.graphics.getWidth(),lvoe.graphics.getHeight())
+	UI.resize(love.graphics.getWidth(),love.graphics.getHeight())
 end
 
 function UI.update(dt) UI.clock = UI.clock + dt end
@@ -132,6 +163,16 @@ function UI.draw()
 		love.graphics.rectangle("line",box.x,box.y,box.w,box.h)
 	end
 	love.graphics.setScissor()
+
+	love.graphics.setColor(10,10,10,255)
+	UI.nameBoxTrx:draw()
+
+	-- ==========================================
+	if UI.colorPickerActive then
+		love.graphics.setColor(255,255,255,255)
+		love.graphics.draw(UI.img.palette,dims.x,dims.y,0,dims.w/UI.img.palette:getWidth(),(dims.h-UI.img.nM:getHeight()*scale)/UI.img.palette:getHeight())
+	end
+
 	area:del()
 	box:del()
 end
@@ -161,6 +202,8 @@ function UI.mousemoved(x,y,dx,dy)
 	elseif love.mouse.isDown("r") then
 		UI.drawLine(UI.fromSX(x),UI.fromSY(y),dx/UI.frames.zoom,dy/UI.frames.zoom,unpack(UI.getCColor(0,0)))
 	end
+
+	UI.nameBoxTrx:mousemoved(x,y,dx,dy)
 
 	dpos:del()
 	pos:del()
@@ -197,10 +240,10 @@ function UI.resize(w,h)
 	progR = dims.x+(ui.editorFramesNameRatio*dims.w-UI.img.etr:getWidth()*scale)
 	progL = dims.r-(UI.img.etr:getWidth()-2)*scale
 	UI.nameBoxTrx = trx("",
-		progR+scale*3,
-		dims.b-UI.img.nM:getHeight()+scale,
+		progR+scale*4,
+		dims.b-UI.img.nM:getHeight()-scale*2,
 		progL-progR-UI.img.nL:getWidth()*scale-UI.img.nR:getWidth()*scale,
-		UI.img.nM:getHeight()-scale*2,
+		UI.img.nM:getHeight(),
 		true)
 	UI.nameBoxTrx:load()
 	love.graphics.draw(UI.img.nL,progR,dims.b,0,scale,scale,0,UI.img.nL:getHeight()-1); progR = progR + UI.img.nL:getWidth()*scale
@@ -226,66 +269,143 @@ function UI.mousepressed(x,y,b)
 	local dims = Rect(ui.editorPaddingLeft*scale,ui.editorPaddingTop*scale,0,0)
 	dims.w = love.graphics.getWidth() - ui.editorPaddingRight*scale - ui.hotBarWidth*love.graphics.getWidth() - dims.x
 	dims.h = love.graphics.getHeight() - ui.editorPaddingBottom*scale - dims.y
+	-- used to fix some of the ordering bullshit with the color picker
+	local togglingColorSelector = false
 
 	local colorDims = Rect(dims.r-scale,dims.y+UI.img.cbx:getHeight()*2*scale,UI.img.cbx:getWidth()*scale,dims.h-UI.img.cbx:getHeight()*5*scale)
 
 	local pos = Vec(x,y)
 
-	if b=="wu" then
-		if x>dims.r and x<dims.r+UI.img.cbx:getWidth()*scale then
-			UI.colors.scroll = math.Limit(UI.colors.scroll-.4,0,math.huge)
-		elseif pos:isWithinRec(dims) then
-			UI.frames.zoom = UI.frames.zoom + .1
+	if UI.clickMode == 0 then
+		-- zooming and panning
+		if b=="wu" then
+			if x>dims.r and x<dims.r+UI.img.cbx:getWidth()*scale then
+				UI.colors.scroll = math.Limit(UI.colors.scroll-.4,0,math.huge)
+			elseif pos:isWithinRec(dims) then
+				UI.frames.zoom = UI.frames.zoom + .1
+			end
+		elseif b=="wd" then
+			if x>dims.r and x<dims.r+UI.img.cbx:getWidth()*scale then
+				UI.colors.scroll = math.Limit(UI.colors.scroll+.4,0,math.huge)
+			elseif pos:isWithinRec(dims) then
+				UI.frames.zoom = UI.frames.zoom - .1
+			end
 		end
-	elseif b=="wd" then
-		if x>dims.r and x<dims.r+UI.img.cbx:getWidth()*scale then
-			UI.colors.scroll = math.Limit(UI.colors.scroll+.4,0,math.huge)
-		elseif pos:isWithinRec(dims) then
-			UI.frames.zoom = UI.frames.zoom - .1
+
+		-- simply drawing pixels
+		if pos:isWithinRec(dims) then
+			if controls.isDown("pickerMod") then
+				local c = UI.colors[UI.colors.current]
+				c[1],c[2],c[3],c[4] = UI.frames[UI.frames.current].img:getPixel(UI.fromSX(x),UI.fromSY(y))
+			else
+				if b=="l" then
+					UI.drawPixel(UI.fromSX(x),UI.fromSY(y),unpack(UI.getCColor()))
+				elseif b=="r" then
+					UI.drawPixel(UI.fromSX(x),UI.fromSY(y),unpack(UI.getCColor(0,0)))
+				end
+			end
+		end
+		-- color selection
+		if b=="l" and pos:isWithinRec(colorDims) then
+			-- declaring general rects; used for the basic detection
+			local box = Rect(dims.r-scale,dims.y+UI.img.cbx:getHeight()*(2-(UI.colors.scroll%1)*UI.img.cbx:getHeight())*scale,UI.img.cbx:getWidth()*scale,UI.img.cbx:getHeight()*scale+scale)
+			local index = box:regress(colorDims,Vec(love.mouse.getX(),love.mouse.getY()))-1
+
+			-- declaring subrects; used for shade specification, declared using the dimensions of the previous.
+			local shade=Rect(box.x+5*scale,box.y+scale+(index-1)*box.h,box.h-5*scale,box.h-5*scale)
+			local main=Rect(box.x+11*scale,box.y+scale+(index-1)*box.h,box.h-5*scale,box.h-5*scale)
+			local light=Rect(box.x+17*scale,box.y+scale+(index-1)*box.h,box.h-5*scale,box.h-5*scale)
+
+			-- darker shade selection
+			if pos:isWithinRec(shade) then
+				if index==UI.colors.current then
+					UI.clickMode = 1
+					UI.colorPickerActive = true
+					togglingColorSelector = true
+					--[[game.system.enableUI("colorPicker")]]
+				end
+				UI.colors.current = index
+				UI.colors.shade = -1
+			end
+			-- mid shade selection
+			if pos:isWithinRec(main) then
+				if index==UI.colors.current then
+					UI.clickMode = 1
+					UI.colorPickerActive = true
+					togglingColorSelector = true
+					--[[game.system.enableUI("colorPicker")]]
+				end
+				UI.colors.current = index
+				UI.colors.shade = 0
+			end
+			-- light shade selection
+			if pos:isWithinRec(light) then
+				if index==UI.colors.current then
+					UI.clickMode = 1
+					UI.colorPickerActive = true
+					togglingColorSelector = true
+					--[[game.system.enableUI("colorPicker")]]
+				end
+				UI.colors.current = index
+				UI.colors.shade = 1
+			end
+			UI.getCColor()
+			-- print(UI.colors.current)
+			-- print(unpack(UI.getCColor()))
+
+			box:del();shade:del();main:del();light:del()
+		elseif b=="l" and pos:isWithinRec(Rec(dims.x-(UI.img.xbut:getWidth()-6)*scale,dims.y-(UI.img.xbut:getHeight()-6)*scale,9*scale,9*scale):del()) then
+			game.system.disableUI("pixelEditor")
 		end
 	end
 
-	if pos:isWithinRec(dims) then
-		if b=="l" then
-			UI.drawPixel(UI.fromSX(x),UI.fromSY(y),unpack(UI.getCColor()))
-		elseif b=="r" then
-			UI.drawPixel(UI.fromSX(x),UI.fromSY(y),unpack(UI.getCColor(0,0)))
+	if pos:isWithinRec(UI.nameBoxTrx.bounds) then
+		UI.clickMode = 2
+		UI.nameBoxTrx:mousepressed(x,y,b)
+	elseif UI.colorPickerActive then
+		if pos:isWithinRec(dims) then
+			UI.clickMode = 1
+			local palettePos = Vec(
+				math.floor((x-dims.x)*UI.img.palette:getWidth()/dims.w),
+				math.floor((y-dims.y)*UI.img.palette:getHeight()/(dims.h-UI.img.nM:getHeight()*scale))
+			)
+			local c = UI.colors[UI.colors.current]
+			c[1],c[2],c[3],c[4] = UI.img.palette:getData():getPixel(palettePos.x,palettePos.y)
+			palettePos:del()
 		end
-	elseif b=="l" and pos:isWithinRec(colorDims) then
-		local box = Rect(dims.r-scale,dims.y+UI.img.cbx:getHeight()*(2-(UI.colors.scroll%1)*UI.img.cbx:getHeight())*scale,UI.img.cbx:getWidth()*scale,UI.img.cbx:getHeight()*scale+scale)
-		local index = box:regress(colorDims,Vec(love.mouse.getX(),love.mouse.getY()))-1
-
-		local shade=Rect(box.x+5*scale,box.y+scale+(index-1)*box.h,box.h-5*scale,box.h-5*scale)
-		local main=Rect(box.x+11*scale,box.y+scale+(index-1)*box.h,box.h-5*scale,box.h-5*scale)
-		local light=Rect(box.x+17*scale,box.y+scale+(index-1)*box.h,box.h-5*scale,box.h-5*scale)
-
-		if pos:isWithinRec(shade) then
-			if index==UI.colors.current then game.system.enableUI("colorPicker") end
-			UI.colors.current = index
-			UI.colors.shade = -1
+		if not togglingColorSelector then
+			UI.clickMode = 0
+			UI.colorPickerActive = false
 		end
-		if pos:isWithinRec(main) then
-			if index==UI.colors.current then game.system.enableUI("colorPicker") end
-			UI.colors.current = index
-			UI.colors.shade = 0
-		end
-		if pos:isWithinRec(light) then
-			if index==UI.colors.current then game.system.enableUI("colorPicker") end
-			UI.colors.current = index
-			UI.colors.shade = 1
-		end
-		UI.getCColor()
-		-- print(UI.colors.current)
-		-- print(unpack(UI.getCColor()))
-
-		box:del();shade:del();main:del();light:del()
-	elseif b=="l" and pos:isWithinRec(Rec(dims.x-(UI.img.xbut:getWidth()-6)*scale,dims.y-(UI.img.xbut:getHeight()-6)*scale,9*scale,9*scale):del()) then
-		game.system.disableUI("pixelEditor")
+	else
+		UI.clickMode = 0
 	end
 
 	dims:del()
 	pos:del()
 	colorDims:del()
+end
+
+function UI.mousereleased(x,y,b)
+	if UI.clickMode == 2 then
+		UI.nameBoxTrx:mousereleased(x,y,b)
+	end
+end
+
+function UI.textinput(txt)
+	if UI.clickMode == 2 then
+		UI.nameBoxTrx:textinput(txt)
+	end
+end
+
+function UI.keypressed(k)
+	if UI.clickMode == 2 then
+		UI.nameBoxTrx:keypressed(k)
+	end
+end
+
+function UI.keyreleased(k)
+	--UI.nameBoxTrx:keyreleased(k)
 end
 
 -- ==========================================

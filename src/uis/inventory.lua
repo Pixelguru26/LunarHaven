@@ -212,7 +212,7 @@ function UI.displayItem(item,path,rect,intersectScissor)
 	local sciss = Rect(love.graphics.getScissor())
 	local intersection
 	if intersectScissor then
-		intersection = rect:copy()--rect:intersection(sciss)
+		intersection = rect:intersection(sciss)
 		love.graphics.setScissor(intersection.x,intersection.y,intersection.w,intersection.h)
 	else
 		love.graphics.setScissor(rect.x,rect.y,rect.w,rect.h)

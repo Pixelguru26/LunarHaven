@@ -337,7 +337,7 @@ end
 lib.ex = ex
 
 function meta.__call(t,txt,x,y,w,h,monoline)
-	return setmetatable({bounds=Rec(x,y,w,h),monoline=monoline},{__index=t.ex})
+	return setmetatable({txt={txt},bounds=Rec(x,y,w,h),monoline=monoline},{__index=t.ex})
 end
 
 setmetatable(lib,meta)

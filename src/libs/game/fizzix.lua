@@ -69,9 +69,13 @@ function lib.gatherPotential(self,world,blacklist,rdt)
 		math.max(0,self.vel.x*rdt)-math.min(0,self.vel.x*rdt),
 		math.max(0,self.vel.y*rdt)-math.min(0,self.vel.y*rdt)
 	)
+	-- starter for iteration
 	local minTile = Rec(math.floor(broadphase.x),math.floor(broadphase.y-0.1),1,1)
+
+	-- iterate over all potential collision candidates
 	for space in broadphase:iter(minTile) do
 		tile = game.getTile(world,space.x,space.y)
+		-- check if the tile exists to be collided with
 		if tile and tile.properties.solid then
 			local v = {Rec(space.x,space.y,1,1),tile}
 			local allowed = true -- blacklist implementation
@@ -113,7 +117,10 @@ end
 
 function lib.react(self,collision,blacklist,rdt)
 	if collision and collision[1]>=0 and collision[1]<1 then
+
+		-- define ground based on the y ordinate of the normal
 		if collision[2].y==-1 then self.onGround = true end
+		
 		self.bounds.pos=self.bounds.pos+self.vel*(collision[1]*rdt) -- apply collision snapping
 		self.vel = self.vel * collision[2].rev.abs -- apply collision to velocity
 		--print(self.vel,collision[2])
@@ -134,6 +141,7 @@ function lib.react(self,collision,blacklist,rdt)
 end
 
 function lib.expel(self,potential)
+	-- essentially simple AABB collision expulsion
 	local c,l,r,u,d,maxI
 	--if #potential>0 then print("==========================================") end
 	for i,v in ipairs(potential) do
@@ -164,7 +172,7 @@ end
 
 function lib.gravity(self,world,dt)
 	-- apply gravity
-	self.vel.y = self.vel.y + world.fizzix.grav*dt*(self.stats and self.stats.mass or 1)
+	self.vel.y = self.vel.y + world.fizzix.grav*dt*((self.stats and self.stats.mass) or 1)
 end
 
 function lib.air(self,world,dt)

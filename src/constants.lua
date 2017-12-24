@@ -3,6 +3,7 @@ _CONSTANTS = {
 	tileH = 32,
 	chunkW = 32,
 	chunkH = 32,
+	camSpeed = 4,
 	fizzix = {
 		grav = 1.622,--9.807, -- gravity acceleration; but floaty.
 		drag = 0.01,

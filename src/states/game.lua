@@ -20,7 +20,7 @@ function state.load()
 	UIMngr["pixelEditor"] = love.filesystem.isFile("uis/pixelEditor.lua") and require("uis/pixelEditor")
 	UIMngr["inventory"] = love.filesystem.isFile("uis/inventory.lua") and require("uis/inventory")
 	game.system.enableUI("hotbar")
-	game.system.enableUI("inventory")
+	game.system.enableUI("pixelEditor")
 	love.graphics.setDefaultFilter("nearest","nearest")
 	blocks.default = {
 		frames = {
