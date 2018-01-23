@@ -134,7 +134,7 @@ _RECTANGLE.data={}
 	end
 	-- end of properties
 		for k,v in pairs(_RECTANGLE) do
-			_RECTANGLE.data[k]='property'
+			_RECTANGLE.data[k]=v
 		end
 	-- ==========================================
 	_RECTANGLE.type="rectangle"
@@ -163,6 +163,40 @@ _RECTANGLE.data={}
 			iv.t-v.b -- distance down
 		}
 		return dists
+	end
+	function _RECTANGLE.expelDir(v,iv)
+		local l1,r1,u1,d1 = unpack(v:relate(iv))
+		l = math.abs(l1)
+		r = math.abs(r1)
+		u = math.abs(u1)
+		d = math.abs(d1)
+		if l<r and l<u and l<d then
+			return 1,l1,r1,u1,d1
+		elseif r<l and r<u and r<d then
+			return 2,l1,r1,u1,d1
+		elseif u<l and u<r and u<d then
+			return 3,l1,r1,u1,d1
+		elseif d<l and d<r and d<u then
+			return 4,l1,r1,u1,d1
+		end
+	end
+	function _RECTANGLE.expel(v,iv)
+		if v:intersect(iv) then
+			local dir,l,r,u,d = v:expelDir(iv)
+			if dir==1 then
+				v.x = v.x - l
+				return Vec(-1,0)
+			elseif dir==2 then
+				v.x = v.x + r
+				return Vec(1,0)
+			elseif dir==3 then
+				v.y = v.y - u
+				return Vec(0,-1)
+			elseif dir==4 then
+				v.y = v.y + d
+				return Vec(0,1)
+			end
+		end
 	end
 	function _RECTANGLE.fit(v,iv,copy)
 		if copy then
@@ -221,7 +255,7 @@ function _RECTANGLE.__index(t,k)
 	if type(_RECTANGLE[k])=='function' and _RECTANGLE.data[k] then
 		return _RECTANGLE[k](t)
 	elseif _RECTANGLE[k] and _RECTANGLE.data[k] then
-		return t[_RECTANGLE[k]] or _RECTANGLE[k]
+		return t[_RECTANGLE[k]]
 	elseif _RECTANGLE[k] then
 		return _RECTANGLE[k]
 	else
@@ -231,7 +265,7 @@ end
 
 function _RECTANGLE.__newindex(t,k,v)
 	if type(_RECTANGLE[k])=='function' and _RECTANGLE.data[k] then
-		return _RECTANGLE[k](t,v)
+		_RECTANGLE[k](t,v)
 	elseif _RECTANGLE[k] and _RECTANGLE.data[k] then
 		t[_RECTANGLE[k]]=v
 	else
@@ -248,11 +282,12 @@ function _RECTANGLE.__eq(a,b)
 end
 
 function _RECTANGLE.meta.__call(t,x,y,w,h,v)
+	--print(t,x,y,w,h,v)
 	v = v or table.remove(_CACHE,#_CACHE) or {}
-	v.x = x
-	v.y = y
-	v.w = w
-	v.h = h
+	v[1] = x
+	v[2] = y
+	v[3] = w
+	v[4] = h
 	return setmetatable(v,_RECTANGLE)
 end
 

@@ -6,6 +6,8 @@ _RECTANGLE = require("libs/Rec")("Rec","Rect","Rectangle")
 _LINE = require("libs/Line")("Line")
 require("libs/util")
 json = require("libs/json")
+game = require("libs/game")
+require("constants")
 
 -- States
 States = {}
@@ -20,11 +22,10 @@ function modErr() print(">> A mod is causing trouble. Here's the lowdown:\n\t"..
 
 -- CORE
 function love.load( ... )
-	print(love.graphics.getSystemLimit("texturesize"))
-	print(love.graphics.getSystemLimit("multicanvas"))
+	--print(love.graphics.getSystemLimit("texturesize"))
+	--print(love.graphics.getSystemLimit("multicanvas"))
 
 	love.graphics.setDefaultFilter("nearest","nearest")
-	require("constants")
 	if state.load then state.load(...) end
 	for i,v in ipairs(enabledUIs) do
 		if v.load then

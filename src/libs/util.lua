@@ -16,6 +16,17 @@
 		return rter, t, #t+1
 	end
 
+	local function min(a,b) return a<b and a or b end
+	local function max(a,b) return a>b and a or b end
+	function love.graphics.intersectScissor(x,y,w,h)
+		local ox,oy,ow,oh = love.graphics.getScissor()
+		ox,oy,ow,oh = ox or 0,oy or 0,ow or gw(),oh or gh()
+		local nx,ny = max(x,ox),max(x,oy)
+		local nw,nh = min(x+w,ox+ow)-nx,min(y+h,oy+oh)-ny
+		love.graphics.setScissor(nx,ny,nw,nh)
+		return nx,ny,nw,nh
+	end
+
 -- ========================================== math crap
 
 	function math.sMin(a,b)
@@ -163,7 +174,7 @@
 		end
 		return icoords(plot)
 	end
-
+	
 	-- simple (and bad) table "serializer" for simple debugging
 	function quickRead(iput,indent,depth)
 		depth = (depth or 5)-1

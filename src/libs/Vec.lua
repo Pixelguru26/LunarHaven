@@ -138,9 +138,9 @@ end
 	function _VECTOR.l(t)
 		local a = t.a
 		if a>7*math.pi/4 or a<math.pi/4 or a>3*math.pi/4 and a<5*math.pi/4 then
-			return t.x/math.cos(t.a)
+			return t.x/math.cos(a)
 		else
-			return t.y/math.sin(t.a)
+			return t.y/math.sin(a)
 		end
 	end
 	_VECTOR.L=_VECTOR.l
@@ -224,7 +224,7 @@ _VECTOR.Zero=_VECTOR.zero
 _VECTOR.ZERO=_VECTOR.zero
 
 function _VECTOR.funcs.isWithinRec(self,rect)
-	return type(rect)=="table" and rect.type=="rectangle" and self >= rect.pos1 and self <= rect.pos4
+	return self.x>=rect.x and self.x<=rect.r and self.y>=rect.y and self.y<=rect.b
 end
 
 function _VECTOR.funcs.limit(self,min,max)

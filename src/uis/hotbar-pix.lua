@@ -1,6 +1,6 @@
 
 local UI = {hotbar = {scroll=0,selIndex=1}}
-local game = require("libs/game")
+local game = game
 local controls = game.control
 
 function UI.load()

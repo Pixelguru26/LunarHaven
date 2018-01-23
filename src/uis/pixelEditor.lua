@@ -17,7 +17,7 @@ local UI = {
 	colorPickerActive = true,
 	--name = "",
 }
-local game = require("libs/game")
+local game = game
 local controls = game.control
 local framedRect = require("libs/frameRect")
 local trx = require("libs/Trx")
@@ -106,6 +106,7 @@ function UI.draw()
 	love.graphics.rectangle("fill",dims.x,dims.y,dims.w,dims.h)
 	love.graphics.setColor(255,255,255,255)
 
+	-- frame
 	love.graphics.setScissor(dims.x,dims.y,dims.w,dims.h)
 	love.graphics.draw(
 		UI.frames[UI.frames.current].img,
@@ -182,38 +183,7 @@ function UI.draw()
 	box:del()
 end
 
-function UI.mousemoved(x,y,dx,dy)
-	local scale = ui.spriteScale
 
-	local dims = Rect(ui.editorPaddingLeft*scale,ui.editorPaddingTop*scale,0,0)
-
-	dims.w = love.graphics.getWidth() - dims.x - (ui.editorPaddingRight*scale + ui.hotBarWidth*love.graphics.getWidth())
-	dims.h = love.graphics.getHeight() - dims.y - ui.editorPaddingBottom*scale
-
-	local pos = Vec(x,y)
-	local dpos = Vec(dx,dy)
-	local frame = UI.frames[UI.frames.current]
-	local frameDims = Vec(frame.img:getWidth(),frame.img:getHeight())
-
-	if love.mouse.isDown("m") then
-		if pos:isWithinRec(dims) then
-			UI.frames.offset:inc(dpos)
-		end
-		--UI.frames.offset = UI.frames.offset:limit(Vec.zero,dims.dims-frameDims*UI.frames.zoom)
-	end
-
-	if love.mouse.isDown("l") then
-		UI.drawLine(UI.fromSX(x),UI.fromSY(y),dx/UI.frames.zoom,dy/UI.frames.zoom,unpack(UI.getCColor()))
-	elseif love.mouse.isDown("r") then
-		UI.drawLine(UI.fromSX(x),UI.fromSY(y),dx/UI.frames.zoom,dy/UI.frames.zoom,unpack(UI.getCColor(0,0)))
-	end
-
-	UI.nameBoxTrx:mousemoved(x,y,dx,dy)
-
-	dpos:del()
-	pos:del()
-	dims:del()
-end
 
 function UI.resize(w,h)
 	UI.UICanv = love.graphics.newCanvas(w,h)
@@ -271,6 +241,41 @@ function UI.resize(w,h)
 	love.graphics.setCanvas()
 end
 
+function UI.mousemoved(x,y,dx,dy)
+	local scale = ui.spriteScale
+
+	local dims = Rect(ui.editorPaddingLeft*scale,ui.editorPaddingTop*scale,0,0)
+
+	dims.w = love.graphics.getWidth() - dims.x - (ui.editorPaddingRight*scale + ui.hotBarWidth*love.graphics.getWidth())
+	dims.h = love.graphics.getHeight() - dims.y - ui.editorPaddingBottom*scale
+
+	local pos = Vec(x,y)
+	local dpos = Vec(dx,dy)
+	local frame = UI.frames[UI.frames.current]
+	local frameDims = Vec(frame.img:getWidth(),frame.img:getHeight())
+
+	if UI.clickMode==0 then
+		if love.mouse.isDown("m") then
+			if pos:isWithinRec(dims) then
+				UI.frames.offset:inc(dpos)
+			end
+			--UI.frames.offset = UI.frames.offset:limit(Vec.zero,dims.dims-frameDims*UI.frames.zoom)
+		end
+
+		if love.mouse.isDown("l") then
+			UI.drawLine(UI.fromSX(x),UI.fromSY(y),dx/UI.frames.zoom,dy/UI.frames.zoom,unpack(UI.getCColor()))
+		elseif love.mouse.isDown("r") then
+			UI.drawLine(UI.fromSX(x),UI.fromSY(y),dx/UI.frames.zoom,dy/UI.frames.zoom,unpack(UI.getCColor(0,0)))
+		end
+	end
+
+	UI.nameBoxTrx:mousemoved(x,y,dx,dy)
+
+	dpos:del()
+	pos:del()
+	dims:del()
+end
+
 function UI.mousepressed(x,y,b)
 	local scale = ui.spriteScale
 	local dims = Rect(ui.editorPaddingLeft*scale,ui.editorPaddingTop*scale,0,0)
@@ -282,7 +287,6 @@ function UI.mousepressed(x,y,b)
 	local colorDims = Rect(dims.r-scale,dims.y+UI.img.cbx:getHeight()*2*scale,UI.img.cbx:getWidth()*scale,dims.h-UI.img.cbx:getHeight()*5*scale)
 
 	local pos = Vec(x,y)
-
 	if UI.clickMode == 0 then
 		-- zooming and panning
 		if b=="wu" then
@@ -367,9 +371,10 @@ function UI.mousepressed(x,y,b)
 
 	if pos:isWithinRec(UI.nameBoxTrx.bounds) then
 		UI.clickMode = 2
+		UI.colorPickerActive = false
 		UI.nameBoxTrx:mousepressed(x,y,b)
 	elseif UI.colorPickerActive then
-		if pos:isWithinRec(dims) and pos.y<dims.b-UI.img.nM:getHeight()*scale then
+		if pos:isWithinRec(dims) and pos.y<dims.b-UI.img.nM:getHeight()*scale and b=='l' then
 			UI.clickMode = 1
 			local palettePos = Vec(
 				math.floor((x-dims.x)*UI.img.palette:getWidth()/dims.w),
@@ -385,6 +390,7 @@ function UI.mousepressed(x,y,b)
 		end
 	else
 		UI.clickMode = 0
+		UI.colorPickerActive = false
 	end
 
 	-- confirmation
@@ -475,9 +481,14 @@ end
 		love.graphics.setPointStyle("rough")
 		love.graphics.setCanvas(UI.frames[UI.frames.current].img)
 		love.graphics.setColor(r,g,b,a)
+		-- also horrible inconsistent results, but not *quite* as bad for the most part. :<
 		for i,ix,iy in bresenham(x,y+1,x-dx,y+1-dy) do
 			love.graphics.point(ix,iy)
 		end
+		-- horrible inconsistent results.
+		--love.graphics.setLineStyle("rough")
+		--love.graphics.setLineWidth(1)
+		--love.graphics.line(math.floor(x+1)+0.5,math.floor(y+1)+0.5,math.floor(x+1)+0.5+math.floor(dx),math.floor(y+1)+0.5+math.floor(dy))
 
 		love.graphics.setScissor(scissx,scissy,scissw,scissh)
 		love.graphics.setBlendMode(bm1,bm2)

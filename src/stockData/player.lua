@@ -1,5 +1,5 @@
 local lume = require("libs/lume")
-local game = require("libs/game")
+local game = game
 local fizzix = game.fizzix
 local controls = game.control
 

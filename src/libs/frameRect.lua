@@ -1,20 +1,42 @@
+if not love.graphics.intersectScissor then
+	-- it's a REQUIREMENT.
+	-- sadly.
+	-- I hate adding this here.
+	function love.graphics.intersectScissor(x,y,w,h)
+		local ox,oy,ow,oh = love.graphics.getScissor()
+		ox,oy,ow,oh = ox or 0,oy or 0,ow or gw(),oh or gh()
+		local nx,ny = max(x,ox),max(x,oy)
+		local nw,nh = min(x+w,ox+ow)-nx,min(y+h,oy+oh)-ny
+		love.graphics.setScissor(nx,ny,nw,nh)
+		return nx,ny,nw,nh
+	end
+end
+
 local function framedRect(rect,topLeft,topRight,bottomLeft,bottomRight,top,left,bottom,right,outside,rep,sx,sy)
 	sx = sx or 1
 	sy = sy or 1
 	if outside then
+		local dx = -math.max(topLeft:getWidth()*sx,left:getWidth()*sx,bottomLeft:getWidth()*sx)
+		local dy = -math.max(topLeft:getHeight()*sy,top:getHeight()*sy,topRight:getHeight()*sy)
+		local dw = -dx + math.max(topRight:getWidth()*sx,right:getWidth()*sx,bottomRight:getWidth()*sx)
+		local dh = -dy + math.max(bottomLeft:getWidth()*sy,bottom:getHeight()*sy,bottomRight:getHeight()*sy)
+		local outerRect = _RECTANGLE(rect.x+dx,rect.y+dy,rect.w+dw,rect.h+dh);
 		if rep then
-			for x=rect.x,rect.r-(top:getWidth()*sx),(top:getWidth()*sx) do
+			local x,y,w,h = love.graphics.getScissor()
+			love.graphics.intersectScissor(unpack(outerRect))
+			for x=rect.x,rect.r,(top:getWidth()*sx) do
 				love.graphics.draw(top,x,rect.y-(top:getHeight()*sy),0,sx,sy)
 			end
-			for x=rect.x,rect.r-(bottom:getWidth()*sx),(bottom:getWidth()*sx) do
+			for x=rect.x,rect.r,(bottom:getWidth()*sx) do
 				love.graphics.draw(bottom,x,rect.b,0,sx,sy)
 			end
-			for y=rect.y,rect.b-(left:getHeight()*sy),(left:getHeight()*sy) do
+			for y=rect.y,rect.b,(left:getHeight()*sy) do
 				love.graphics.draw(left,rect.x-(left:getWidth()*sx),y,0,sx,sy)
 			end
-			for y=rect.y,rect.b-(right:getHeight()*sy),(right:getHeight()*sy) do
+			for y=rect.y,rect.b,(right:getHeight()*sy) do
 				love.graphics.draw(right,rect.r,y,0,sx,sy)
 			end
+			love.graphics.setScissor(x,y,w,h)
 		else
 			love.graphics.draw(top,rect.x,rect.y-(top:getHeight()*sy),0,rect.w/(top:getWidth()*sx)*sx,sy)
 			love.graphics.draw(bottom,rect.x,rect.b,0,rect.w/(bottom:getWidth()*sx)*sx,sy)
@@ -27,10 +49,12 @@ local function framedRect(rect,topLeft,topRight,bottomLeft,bottomRight,top,left,
 		love.graphics.draw(bottomRight,rect.r,rect.b,0,sx,sy)
 	else
 		if rep then
-			local r1 = rect.r-(topRight:getWidth()*sx)-(top:getWidth()*sx)
-			local r2 = rect.r-(bottomRight:getWidth()*sx)-(bottom:getWidth()*sx)
-			local b1 = rect.b-(bottomLeft:getHeight()*sy)-(left:getHeight()*sy)
-			local b2 = rect.b-(bottomRight:getHeight()*sy)-(right:getHeight()*sy)
+			local x,y,w,h = love.graphics.getScissor()
+			love.graphics.intersectScissor(unpack(rect))
+			local r1 = rect.r-(topRight:getWidth()*sx)
+			local r2 = rect.r-(bottomRight:getWidth()*sx)
+			local b1 = rect.b-(bottomLeft:getHeight()*sy)
+			local b2 = rect.b-(bottomRight:getHeight()*sy)
 			for x=rect.x+(topLeft:getWidth()*sx),r1,(top:getWidth()*sx) do
 				love.graphics.draw(top,x,rect.y,0,sx,sy)
 			end
@@ -43,6 +67,7 @@ local function framedRect(rect,topLeft,topRight,bottomLeft,bottomRight,top,left,
 			for y=rect.y+(topLeft:getHeight()*sy),b2,(right:getHeight()*sy) do
 				love.graphics.draw(right,rect.r-(right:getWidth()*sx),y,0,sx,sy)
 			end
+			love.graphics.setScissor(x,y,w,h)
 		else
 			local w1 = rect.w-(topLeft:getWidth()*sx)-(topRight:getWidth()*sx)
 			local w2 = rect.w-(bottomLeft:getWidth()*sx)-(bottomRight:getWidth()*sx)

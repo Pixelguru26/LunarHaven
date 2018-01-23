@@ -1,5 +1,5 @@
 local UI = {zoom = 2,bmScroll=0,mScroll=0,path="Player/Inventory/unsorted",items = {},itemTypes = {},folders = {},cursorItem = nil}
-local game = require("libs/game")
+local game = game
 local controls = game.control
 local framedRect = require("libs/frameRect")
 

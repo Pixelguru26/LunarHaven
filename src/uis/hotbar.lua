@@ -1,7 +1,7 @@
 local UI = {hotbar = {scroll=0,selIndex=1,shown=true}} -- remnant of an older system
 --@TODO ALPHA: organize sensibly with new system
 require("libs/util")
-local game = require("libs/game")
+local game = game
 local framedRect = require("libs/frameRect")
 
 function UI.load()
@@ -151,7 +151,7 @@ function UI.mousepressed(x,y,b)
 			local ox = math.floor((x+state.viewPort.x)/tileW) -- world x
 			local oy = math.floor((y+state.viewPort.y)/tileH) -- world y
 			if controls.isIn("place",b) and not game.system.isUIEnabled("pixelEditor") and not game.system.isUIEnabled("inventory") then
-				print(ox,oy)
+				--print(ox,oy)
 				UI.placeBlock(ox,oy)
 			elseif controls.isIn("scrlUp",b) and not game.system.isUIEnabled("pixelEditor") and not game.system.isUIEnabled("inventory") then
 				UI.hotbar.selIndex=math.wrap(UI.hotbar.selIndex-1,1,10)

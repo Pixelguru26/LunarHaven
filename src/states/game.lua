@@ -1,5 +1,5 @@
 local state = {}
-game = require("libs/game")
+local game = game
 worldLib = game.world
 fizzLib = game.fizzix
 controls = game.control
@@ -8,20 +8,24 @@ require("libs/util")
 blocks = {}
 world = {entLayers = {},layerCount = 1}
 world.fizzix = {
-	grav = 1.622,--9.807, -- gravity acceleration; but floaty.
-	drag = 0.01,
+	grav = fizzix.grav,
+	drag = fizzix.drag,
 	clock = 0
 }
 deltas = {c=0,n=0} -- purely for debugging
 
 function state.load()
+	-- simple UI loading
 	love.graphics.setDefaultFilter("nearest","nearest")
 	UIMngr["hotbar"] = love.filesystem.isFile("uis/hotbar.lua") and require("uis/hotbar")
 	UIMngr["pixelEditor"] = love.filesystem.isFile("uis/pixelEditor.lua") and require("uis/pixelEditor")
 	UIMngr["inventory"] = love.filesystem.isFile("uis/inventory.lua") and require("uis/inventory")
+	UIMngr["libtest"] = love.filesystem.isFile("uis/libtest.lua") and require("uis/libtest")
 	game.system.enableUI("hotbar")
-	game.system.enableUI("pixelEditor")
+	game.system.enableUI("libtest")
+	--game.system.enableUI("pixelEditor")
 	love.graphics.setDefaultFilter("nearest","nearest")
+	
 	blocks.default = {
 		frames = {
 			tile = love.graphics.newImage("stockData/tiles/defaultBlock.png")
