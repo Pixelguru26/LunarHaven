@@ -9,73 +9,76 @@ local frameRenderers
 
 -- ========================================== UI Element class
 local element = {}
-element.dims = Rec(0,0,0,0)
-element.imgs = {}
-element.type = "Rect" -- many possible: Rect, Text, List, Ellipse, SpriteRect, Sprite, Line, EditorCanvas, Frame, Polygon
-element.options = {fill = true,resDep = false}
--- type-specific options - some types may have required options.
--- Rect
-	-- fill = bool; first arg passed to love.graphics.rectangle
--- Text
-	-- font = font obj, size = number, scale = number
--- List
-	-- endless = bool, scrollup = list { string }, scrolldn = list { string }
--- Ellipse
--- SpriteRect
--- Sprite
--- Line
--- EditorCanvas
--- Frame
--- Polygon
-element.color = {255,255,255,255}
-element.eatClick = true
-element.clickOverride = false
-element.data = {}
--- methods
-element.copy = function(self) end
--- callbacks
-element.clicked = function(self,x,y,b,consumed) end
---element.??? = function(self,x,y,dx,dy,consumed) end -- unsure how I want to implement this.
-element.released = function(self,x,y,b,consumed) end
-element.subClicked = function (self,x,y,b,consumed) end
-element.subReleased = function (self,x,y,b,consumed) end
---element.scroll = function (self,dx,dy,consumed) end
-element.drawSub = function (self,i,x,y,data) end
+	element.dims = Rec(0,0,0,0)
+	element.imgs = {}
+	element.type = "Rect" -- many possible: Rect, Text, List, Ellipse, SpriteRect, Sprite, Line, EditorCanvas, Frame, Polygon
+	element.options = {fill = true,resDep = false}
+		-- type-specific options - some types may have required options.
+		-- Rect
+			-- fill = bool; first arg passed to love.graphics.rectangle
+		-- Text
+			-- font = font obj, size = number, scale = number
+		-- List
+			-- endless = bool, scrollup = list { string }, scrolldn = list { string }
+		-- Ellipse
+		-- SpriteRect
+		-- Sprite
+		-- Line
+		-- EditorCanvas
+		-- Frame
+		-- Polygon
+	element.color = {255,255,255,255}
+	element.eatClick = true
+	element.clickOverride = false
+	element.data = {}
+	-- methods
+	element.copy = function(self) end
+	-- callbacks
+	element.clicked = function(self,x,y,b,consumed) end
+	--element.??? = function(self,x,y,dx,dy,consumed) end -- unsure how I want to implement this.
+	element.released = function(self,x,y,b,consumed) end
+	element.subClicked = function (self,x,y,b,consumed) end
+	element.subReleased = function (self,x,y,b,consumed) end
+	--element.scroll = function (self,dx,dy,consumed) end
+	element.drawSub = function (self,i,x,y,data) end
 
 -- ========================================== UI Frame class
 local frame = {}
-frame.dims = Rec(0,0,0,0)
-frame.elements = {}
-frame.type = "SpriteRect" -- possible: Fill, Line, Full, Tile, SpriteRect
-frame.canvas = nil
-frame.internalOffset = true
-frame.resDep = true
-frame.color={255,255,255,255}
-frame.color2 = {0,0,0,255}
-frame.sprite = love.graphics.newImage("stockData/tiles/defaultBlock.png")
-frame.sprites = {
-	T = love.graphics.newImage("stockData/UI/UI2_border1_T.png"),
-	B = love.graphics.newImage("stockData/UI/UI2_border1_B.png"),
-	L = love.graphics.newImage("stockData/UI/UI2_border1_L.png"),
-	R = love.graphics.newImage("stockData/UI/UI2_border1_R.png"),
-	TL = love.graphics.newImage("stockData/UI/UI2_border1_TL.png"),
-	TR = love.graphics.newImage("stockData/UI/UI2_border1_TR.png"),
-	BL = love.graphics.newImage("stockData/UI/UI2_border1_BL.png"),
-	BR = love.graphics.newImage("stockData/UI/UI2_border1_BR.png"),
-	BG = love.graphics.newImage("stockData/UI/UI2_backg_color.png")
-}
-frame.innerOffset = true
+	frame.dims = Rec(0,0,0,0)
+	frame.elements = {}
+	frame.type = "SpriteRect" -- possible: Fill, Line, Full, Tile, SpriteRect
+	frame.canvas = nil
+	frame.internalOffset = true
+	frame.resDep = true
+	frame.color={255,255,255,255}
+	frame.color2 = {0,0,0,255}
+	frame.sprite = love.graphics.newImage("stockData/tiles/defaultBlock.png")
+	frame.sprites = {
+		T = love.graphics.newImage("stockData/UI/UI2_border1_T.png"),
+		B = love.graphics.newImage("stockData/UI/UI2_border1_B.png"),
+		L = love.graphics.newImage("stockData/UI/UI2_border1_L.png"),
+		R = love.graphics.newImage("stockData/UI/UI2_border1_R.png"),
+		TL = love.graphics.newImage("stockData/UI/UI2_border1_TL.png"),
+		TR = love.graphics.newImage("stockData/UI/UI2_border1_TR.png"),
+		BL = love.graphics.newImage("stockData/UI/UI2_border1_BL.png"),
+		BR = love.graphics.newImage("stockData/UI/UI2_border1_BR.png"),
+		BG = love.graphics.newImage("stockData/UI/UI2_backg_color.png")
+	}
+	frame.innerOffset = true
+
+	function frame.draw(self,...)
+		if frameRenderers[self.type] then
+			frameRenderers[self.type](self,...)
+		end
+	end
+
+-- ========================================== Helper functions for drawing and resolution independance
 
 local function resDepRec(rect)
 	return rect.x*love.graphics.getWidth(),rect.y*love.graphics.getHeight(),rect.w*love.graphics.getWidth(),rect.h*love.graphics.getHeight()
 end
 local function unResDepRec(rect)
 	return rect.x/love.graphics.getWidth(),rect.y/love.graphics.getHeight(),rect.w/love.graphics.getWidth(),rect.h/love.graphics.getHeight()
-end
-function frame.draw(self,...)
-	if frameRenderers[self.type] then
-		frameRenderers[self.type](self,...)
-	end
 end
 -- ==========================================
 frameRenderers = {}
@@ -237,26 +240,33 @@ function elementRenderers.getRelativeDims(frame,element,resDep,gw,gh)
 	gh = gh or love.graphics.getHeight()
 	local x,y,w,h = unpack(element.dims)
 	local fx,fy,fw,fh = unpack(frame.dims)
-	if frame.resDep then
-		fx = fx / gw
-		fy = fy / gh
-		fw = fw / gw
-		fh = fh / gh
-	end
-	if element.options.resDep then
-		x = x / gw
-		y = y / gh
-		w = w / gw
-		h = h / gh
-	end
-	x = x * fw
-	y = y * fh
-	w = w * fw
-	h = h * fh
-	if frame.internalOffset then
-		x = x - frame.dims.x
-		y = y - frame.dims.y
-	end
+	-- convert units to standard non resdep
+		if frame.resDep then
+			fx = fx / gw
+			fy = fy / gh
+			fw = fw / gw
+			fh = fh / gh
+		end
+		if element.options.resDep then
+			x = x / gw
+			y = y / gh
+			w = w / gw
+			h = h / gh
+		else
+			-- frame internal positioning
+			x = x * fw
+			y = y * fh
+			w = w * fw
+			h = h * fh
+		end
+	-- I guess this is a thing??
+		if not frame.internalOffset then
+			x = x - fx
+			y = y - fy
+		else
+			x = x + fx
+			y = y + fy
+		end
 	if resDep then
 		x = x * gw
 		y = y * gh
@@ -270,7 +280,8 @@ local relDims = elementRenderers.getRelativeDims
 function elementRenderers.Rect(frame,element)
 	local prevR,prevG,prevB,prevA = love.graphics.getColor()
 	love.graphics.setColor(unpack(element.color))
-	love.graphics.rectangle(element.options.fill and "fill" or "line",elementRenderers.getRelativeDims(frame,element,element.resDep))
+	print(elementRenderers.getRelativeDims(frame,element,element.resDep))
+	love.graphics.rectangle(element.options.fill and "fill" or "line",elementRenderers.getRelativeDims(frame,element,true))
 end
 function elementRenderers.Text(frame,element)
 	local scale = element.scale or 1
